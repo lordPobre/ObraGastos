@@ -144,13 +144,8 @@
         const checkboxes = document.querySelectorAll('.check-item');
         checkboxes.forEach(cb => cb.checked = this.checked);
     });
-
     function descargarReporte(urlBase) {
-        // 1. Obtener los parámetros actuales de la URL (filtros de fecha)
         const params = new URLSearchParams(window.location.search);
-        
-        // 2. Construir la nueva URL de descarga manteniendo los filtros
-        // Ejemplo: /exportar-excel/?fecha_inicio=2024-01-01
         window.location.href = urlBase + "?" + params.toString();
     }
 </script>
