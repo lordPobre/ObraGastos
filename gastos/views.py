@@ -15,20 +15,11 @@ from django.db.models.functions import TruncMonth
 from django.template.loader import render_to_string
 from xhtml2pdf import pisa
 
-# --- VISTA 1: DASHBOARD ---
 def dashboard(request):
-    # 1. Tu consulta base (se mantiene igual)
     gastos = Gasto.objects.all().order_by('-fecha_emision')
-    
-    # ... (Tu lógica de filtros actual) ...
     obra_id = request.GET.get('obra')
     if obra_id:
-        # Si tienes lógica de filtro aquí, asegúrate de actualizar la variable 'gastos'
-        # Por ejemplo: gastos = gastos.filter(obra_id=obra_id)
         pass 
-
-    # --- NUEVA LÓGICA PARA EL GRÁFICO (Insertar aquí) ---
-    # Agrupamos por mes y sumamos los montos
     resumen_mensual = (
         gastos
         .annotate(mes=TruncMonth('fecha_emision'))
@@ -36,22 +27,15 @@ def dashboard(request):
         .annotate(total=Sum('monto_total'))
         .order_by('mes')
     )
-
-    # Preparamos las listas para enviarlas a JavaScript
     labels_grafico = []
     data_grafico = []
 
     for item in resumen_mensual:
         if item['mes']:
-            # Formato YYYY-MM (Ej: 2024-01)
             labels_grafico.append(item['mes'].strftime("%Y-%m"))
             data_grafico.append(item['total'])
-    # ----------------------------------------------------
-
-    # Tu lógica de totales (se mantiene igual)
     suma_data = gastos.aggregate(Sum('monto_total'))
     total_mes = suma_data['monto_total__sum'] or 0
-    
     cantidad_gastos = gastos.count()
     ultimos_gastos = gastos[:10]
 
@@ -62,32 +46,23 @@ def dashboard(request):
         'fecha_actual': date.today(),
         'obras': [], 
         'obra_seleccionada': obra_id,
-        # --- AGREGAMOS LOS DATOS DEL GRÁFICO AL CONTEXTO ---
         'labels_grafico': labels_grafico,
         'data_grafico': data_grafico,
     }
     
     return render(request, 'gastos/dashboard.html', context)
 
-
-# --- VISTA 2: CREAR (SUBIR Y ESCANEAR) ---
-@login_required # <--- Esto asegura que haya un usuario logueado
+@login_required 
 def crear_gasto(request):
     if request.method == 'POST':
         form = GastoForm(request.POST, request.FILES)
         if form.is_valid():
-            # 1. PAUSA EL GUARDADO (commit=False)
             gasto = form.save(commit=False) 
-            
-            # 2. ASIGNA EL USUARIO ACTUAL
             gasto.usuario = request.user 
-            
-            # 3. AHORA SÍ, GUARDA EN LA BD
             gasto.save() 
 
-            # --- AQUI EMPIEZA EL ESCÁNER (Igual que antes) ---
-            if gasto.imagen: # O imagen_boleta, revisa tu modelo
-                # ... (resto de tu lógica de escáner) ...
+            
+            if gasto.imagen:
                 try:
                     # Ajusta 'imagen' o 'imagen_boleta' según tu modelo
                     resultado = procesar_boleta_chilena(gasto.imagen.path)
