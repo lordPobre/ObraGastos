@@ -137,23 +137,21 @@
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         const ctx = document.getElementById('miGraficoMensual').getContext('2d');
-        
-        // Recibimos los datos desde Django con el filtro safe
         const labels = {{ labels_grafico|safe }};
         const data = {{ data_grafico|safe }};
 
         new Chart(ctx, {
-            type: 'line', // Puedes cambiar a 'bar' si prefieres barras
+            type: 'line', 
             data: {
                 labels: labels,
                 datasets: [{
                     label: 'Monto Mensual ($)',
                     data: data,
-                    borderColor: '#0d6efd', // Color azul Bootstrap
+                    borderColor: '#0d6efd', 
                     backgroundColor: 'rgba(13, 110, 253, 0.1)',
                     borderWidth: 2,
                     fill: true,
-                    tension: 0.3 // Curvatura de la línea
+                    tension: 0.3 
                 }]
             },
             options: {
