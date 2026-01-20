@@ -60,28 +60,21 @@ def crear_gasto(request):
             gasto = form.save(commit=False) 
             gasto.usuario = request.user 
             gasto.save() 
-
             
             if gasto.imagen:
                 try:
-                    # Ajusta 'imagen' o 'imagen_boleta' según tu modelo
                     resultado = procesar_boleta_chilena(gasto.imagen.path)
                     
                     if 'error' not in resultado:
-                        # 1. Asignar Monto (Ya lo tenías)
                         if resultado.get('monto_total'):
                             gasto.monto_total = resultado['monto_total']
                         
-                        # 2. Asignar RUT (Ya lo tenías)
                         if resultado.get('rut_emisor'):
                             gasto.rut_emisor = resultado['rut_emisor']
 
-                        # 3. --- AGREGAR ESTO (Faltaba esta parte) ---
                         if resultado.get('folio'):
                             gasto.folio = resultado['folio']
-                        # --------------------------------------------
-
-                        # 4. Asignar Fecha (Ya lo tenías)
+                        
                         fecha_str = resultado.get('fecha_emision')
                         if fecha_str:
                             try:
@@ -90,7 +83,7 @@ def crear_gasto(request):
                                 pass
 
                         gasto.procesado_exitosamente = True
-                        gasto.save() # Aquí se guardan los cambios en la BD
+                        gasto.save() 
                         messages.success(request, "¡Boleta leída! Por favor confirma los datos.")
                     else:
                         messages.warning(request, f"Escáner: {resultado['error']}")
@@ -103,7 +96,6 @@ def crear_gasto(request):
 
     return render(request, 'gastos/crear_gasto.html', {'form': form, 'titulo': 'Nuevo Gasto'})
 
-# --- VISTA 3: EDITAR (VERIFICAR) ---
 def editar_gasto(request, pk):
     gasto = get_object_or_404(Gasto, pk=pk)
     
@@ -118,7 +110,6 @@ def editar_gasto(request, pk):
 
     return render(request, 'gastos/editar_gasto.html', {'form': form})
 
-# --- VISTA 4: ELIMINAR ---
 def eliminar_gasto(request, pk):
     gasto = get_object_or_404(Gasto, pk=pk)
     if request.method == 'POST':
@@ -128,22 +119,16 @@ def eliminar_gasto(request, pk):
     return render(request, 'gastos/eliminar_gasto.html', {'object': gasto})
 
 def historial_gastos(request):
-    # 1. Obtenemos todos los gastos base ordenados por fecha
     gastos = Gasto.objects.all().order_by('-fecha_emision')
-    
-    # 2. Capturamos los filtros de la URL (si existen)
     fecha_inicio = request.GET.get('fecha_inicio')
     fecha_fin = request.GET.get('fecha_fin')
 
-    # 3. Aplicamos lógica de filtrado
     if fecha_inicio:
         gastos = gastos.filter(fecha_emision__gte=fecha_inicio)
     
     if fecha_fin:
         gastos = gastos.filter(fecha_emision__lte=fecha_fin)
 
-    # 4. Calculamos el total de LO QUE SE ESTÁ VIENDO (filtrado)
-    # Esto es muy útil para saber cuánto se gastó en ese rango de fechas específico
     suma_filtrada = gastos.aggregate(Sum('monto_total'))['monto_total__sum'] or 0
 
     context = {
@@ -163,26 +148,20 @@ def carga_masiva(request):
         form = CargaMasivaForm(request.POST, request.FILES)
         
         if form.is_valid():
-            # USAMOS getlist PARA OBTENER TODOS LOS ARCHIVOS
             archivos = request.FILES.getlist('imagenes')
             print(f"DEBUG: Se recibieron {len(archivos)} archivos.")
-            
             procesados = 0
             fallidos = 0
             
             for f in archivos:
                 try:
                     print(f"DEBUG: Procesando archivo: {f.name}")
-                    
-                    # 1. Crear Gasto Base
                     nuevo_gasto = Gasto(
                         usuario=request.user,
                         imagen=f,
                         procesado_exitosamente=False
                     )
                     nuevo_gasto.save()
-                    
-                    # 2. Escanear
                     resultado = procesar_boleta_chilena(nuevo_gasto.imagen.path)
                     
                     if 'error' not in resultado:
@@ -192,8 +171,7 @@ def carga_masiva(request):
                             nuevo_gasto.rut_emisor = resultado['rut_emisor']
                         if resultado.get('folio'):
                             nuevo_gasto.folio = resultado['folio']
-                        
-                        # Fecha
+
                         fecha_str = resultado.get('fecha_emision')
                         if fecha_str:
                             try:
@@ -211,7 +189,6 @@ def carga_masiva(request):
                     print(f"DEBUG: Error crítico en {f.name}: {e}")
                     fallidos += 1
 
-            # Mensajes al usuario
             if procesados > 0:
                 messages.success(request, f"¡Éxito! {procesados} boletas procesadas correctamente.")
             if fallidos > 0:
@@ -233,8 +210,6 @@ def carga_masiva(request):
 def eliminar_masivo(request):
     if request.method == 'POST':
         ids_a_borrar = request.POST.getlist('gastos_ids')
-        
-        # --- Lógica de Borrado (Igual que antes) ---
         if ids_a_borrar:
             cantidad, _ = Gasto.objects.filter(
                 id__in=ids_a_borrar, 
@@ -245,41 +220,25 @@ def eliminar_masivo(request):
                 messages.success(request, f"🗑️ Se eliminaron {cantidad} boletas.")
             else:
                 messages.warning(request, "No se pudo eliminar.")
-        
-        # --- NUEVA LÓGICA DE REDIRECCIÓN INTELIGENTE ---
-        
-        # 1. Recuperamos los filtros que venían ocultos en el formulario
         f_inicio = request.POST.get('fecha_inicio_filtro')
         f_fin = request.POST.get('fecha_fin_filtro')
-        
-        # 2. Obtenemos la URL base del historial (ej: '/gastos/historial/')
         base_url = reverse('historial_gastos')
-        
-        # 3. Preparamos los parámetros (query string)
         parametros = {}
         if f_inicio: parametros['fecha_inicio'] = f_inicio
         if f_fin:    parametros['fecha_fin'] = f_fin
-        
-        # 4. Si hay parámetros, los pegamos a la URL
         if parametros:
-            # Esto crea algo como: /gastos/historial/?fecha_inicio=2024-01-01&fecha_fin=...
             url_final = f"{base_url}?{urlencode(parametros)}"
             return redirect(url_final)
-            
-    # Si no hay filtros, volvemos al historial normal
     return redirect('historial_gastos')
 
 @login_required
 def exportar_excel(request):
-    # 1. Recuperar Filtros (Igual que en el historial)
     fecha_inicio = request.GET.get('fecha_inicio')
     fecha_fin = request.GET.get('fecha_fin')
-    
     gastos = Gasto.objects.all().order_by('-fecha_emision')
     if fecha_inicio: gastos = gastos.filter(fecha_emision__gte=fecha_inicio)
     if fecha_fin:    gastos = gastos.filter(fecha_emision__lte=fecha_fin)
 
-    # 2. Configurar el Excel
     response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
     response['Content-Disposition'] = f'attachment; filename=Reporte_Gastos_{datetime.now().strftime("%Y%m%d")}.xlsx'
     
@@ -287,19 +246,14 @@ def exportar_excel(request):
     ws = wb.active
     ws.title = "Gastos"
 
-    # 3. Estilos
     header_font = Font(bold=True, color="FFFFFF")
     header_fill = PatternFill(start_color="4F81BD", end_color="4F81BD", fill_type="solid")
-    
-    # 4. Cabecera
     headers = ["Fecha", "RUT Emisor", "Folio", "Monto Total", "Usuario"]
     ws.append(headers)
     
-    for cell in ws[1]: # Aplicar estilo a la primera fila
+    for cell in ws[1]: 
         cell.font = header_font
         cell.fill = header_fill
-
-    # 5. Datos
     total = 0
     for gasto in gastos:
         ws.append([
@@ -310,17 +264,13 @@ def exportar_excel(request):
             gasto.usuario.username
         ])
         total += gasto.monto_total
-
-    # 6. Fila de Total
     ws.append(["", "", "TOTAL ACUMULADO:", total, ""])
     ws.cell(row=ws.max_row, column=4).font = Font(bold=True)
-
     wb.save(response)
     return response
 
 @login_required
 def exportar_pdf(request):
-    # 1. Recuperar Filtros
     fecha_inicio = request.GET.get('fecha_inicio')
     fecha_fin = request.GET.get('fecha_fin')
     
@@ -330,7 +280,6 @@ def exportar_pdf(request):
     
     total = gastos.aggregate(Sum('monto_total'))['monto_total__sum'] or 0
 
-    # 2. Renderizar HTML para el PDF
     template_path = 'gastos/reporte_pdf.html'
     context = {
         'gastos': gastos,
@@ -339,8 +288,7 @@ def exportar_pdf(request):
         'fecha_fin': fecha_fin,
         'empresa': 'Mi Constructora S.A.' # Puedes personalizar esto
     }
-    
-    # 3. Crear PDF
+
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = 'attachment; filename="reporte_gastos.pdf"'
     
