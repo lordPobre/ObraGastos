@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Validar Gasto</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* Hacemos que la imagen no ocupe toda la pantalla gigante en escritorio */
+        .boleta-preview {
+            max-height: 40vh; 
+            object-fit: contain;
+            background-color: #333;
+        }
+    </style>
+</head>
+<body class="bg-light">
+
+<div class="container py-3">
+    <div class="row justify-content-center mb-3">
+        <div class="col-md-6 text-center">
+            <div class="card shadow-sm">
+                <div class="card-header bg-dark text-white">
+                    Foto Original
+                </div>
+                <div class="card-body p-0">
+                    {% if gasto.imagen %}
+                        <img src="{{ gasto.imagen.url }}" class="img-fluid boleta-preview w-100" alt="Boleta">
+                    {% else %}
+                        <p class="p-3">No hay imagen disponible</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-body">
+                    <h4 class="card-title mb-3">Verificar Datos</h4>
+                    
+                    {% if not gasto.procesado_exitosamente %}
+                        <div class="alert alert-warning py-2">
+                            <small>⚠️ Revisa los datos, el escáner automático pudo fallar.</small>
+                        </div>
+                    {% endif %}
+
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        {% for field in form %}
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.errors %}
+                                <div class="text-danger small">{{ field.errors }}</div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+
+                        <div class="d-grid gap-2 mt-4">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                ✅ Confirmar y Guardar
+                            </button>
+                            <a href="{% url 'subir_gasto' %}" class="btn btn-outline-secondary">
+                                Cancelar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

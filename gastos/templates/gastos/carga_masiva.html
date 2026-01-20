@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card shadow border-0 mt-4">
+            <div class="card-header bg-dark text-white text-center py-4">
+                <h3 class="fw-bold mb-0"><i class="bi bi-cloud-upload me-2"></i>Carga Masiva</h3>
+            </div>
+            
+            <div class="card-body p-4">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    {% if form.errors %}
+                        <div class="alert alert-danger">
+                            <strong>Error:</strong> {{ form.errors }}
+                        </div>
+                    {% endif %}
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Selecciona tus imágenes</label>
+                        {{ form.imagenes }}
+                        <div class="form-text">Usa Ctrl o Cmd para seleccionar varias fotos a la vez.</div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg" id="btn-procesar">
+                            Procesar Todo
+                        </button>
+                        <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">Volver</a>
+                    </div>
+                </form>
+                
+                <div id="loading" class="text-center mt-3 d-none">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <p class="small text-muted">El robot está trabajando...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.querySelector('form').addEventListener('submit', function() {
+        var btn = document.getElementById('btn-procesar');
+        btn.disabled = true;
+        btn.innerHTML = 'Subiendo...';
+        document.getElementById('loading').classList.remove('d-none');
+    });
+</script>
+{% endblock %}

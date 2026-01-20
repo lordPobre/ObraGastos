@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{% if message.tags == 'success' %}success{% elif message.tags == 'warning' %}warning{% else %}danger{% endif %} alert-dismissible fade show" role="alert">
+                    {% if message.tags == 'success' %}
+                        <i class="bi bi-check-circle-fill me-2"></i>
+                    {% else %}
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    {% endif %}
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="card">
+            <div class="card-header bg-white py-3">
+                <h4 class="mb-0 text-primary">{{ titulo }}</h4>
+            </div>
+            
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data"> {% csrf_token %}
+
+                    <div class="mb-4">
+                        <label for="{{ form.imagen.id_for_label }}" class="form-label fw-bold text-primary">
+                            <i class="bi bi-camera-fill"></i> Subir Foto de la Boleta
+                        </label>
+                        {{ form.imagen }} 
+                        <div class="form-text">Sube la imagen para que el robot lea los datos automáticamente.</div>
+                        
+                        {% if form.imagen.errors %}
+                            <div class="text-danger small">{{ form.imagen.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    {% for field in form %}
+                        {% if field.name != 'imagen' and field.name != 'imagen_boleta' %}
+                            <div class="mb-3">
+                                <label for="{{ field.id_for_label }}" class="form-label fw-bold text-secondary">
+                                    {{ field.label }}
+                                </label>
+                                {{ field }}
+                                {% if field.errors %}
+                                    <div class="text-danger small">{{ field.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-magic"></i> Subir y Escanear
+                        </button>
+                        <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">Cancelar</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="text-center mt-3 text-muted small">
+            Powered by Python & Django
+        </div>
+
+    </div>
+</div>
+{% endblock %}
