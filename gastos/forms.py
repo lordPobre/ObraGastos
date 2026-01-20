@@ -30,23 +30,18 @@ class MultipleFileField(forms.FileField):
     def to_python(self, data):
         if not data:
             return None
-        # Importante: Devolvemos la data tal cual para que la vista use getlist()
         return data
 
     def clean(self, data, initial=None):
-        # Evitamos la validación estándar que espera un solo archivo
         if not data:
             raise forms.ValidationError("Es necesario seleccionar al menos un archivo.")
         return data
-
-# --- TU FORMULARIO DE CARGA ---
 
 class CargaMasivaForm(forms.Form):
     imagenes = MultipleFileField(
         widget=MultipleFileInput(attrs={
             'multiple': True,
             'class': 'form-control',
-            # AQUÍ ESTÁ EL CAMBIO: Agregamos .pdf
             'accept': 'image/*,.pdf' 
         }),
         label="Selecciona boletas (Fotos o PDFs)"
