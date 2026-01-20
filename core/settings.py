@@ -57,10 +57,7 @@ ROOT_URLCONF = 'core.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        
-        # BUSCA ESTA LÍNEA Y AGREGA LO QUE FALTA:
         'DIRS': [BASE_DIR / 'templates'], 
-        
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -127,12 +124,8 @@ MEDIA_URL = '/media/'
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-LOGIN_REDIRECT_URL = '/'  # Al Dashboard (raíz)
-
-# 2. Donde ir después de cerrar sesión (logout)
+LOGIN_REDIRECT_URL = '/'  
 LOGOUT_REDIRECT_URL = '/accounts/login/' 
-
-# 3. Si intentan entrar sin permiso, enviarlos aquí:
 LOGIN_URL = '/accounts/login/'
 
 X_FRAME_OPTIONS = 'SAMEORIGIN'
