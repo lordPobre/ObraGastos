@@ -9,7 +9,6 @@ import fitz
 from bs4 import BeautifulSoup
 from itertools import cycle 
 
-# --- INICIALIZACIÓN ---
 reader = easyocr.Reader(['es'], gpu=False) 
 
 try:
@@ -18,7 +17,6 @@ try:
 except ImportError:
     TIENE_MOTOR_B = False
 
-# --- VALIDACIONES MATEMÁTICAS ---
 def es_rut_valido(rut_str):
     """Retorna True si el string es matemáticamente un RUT chileno."""
     limpio = rut_str.upper().replace(".", "").replace(" ", "").replace("-", "")
@@ -51,7 +49,6 @@ def procesar_boleta_chilena(ruta_archivo):
     print(f"DEBUG: Procesando {ruta_archivo}...")
     datos = {"rut_emisor": None, "fecha_emision": None, "monto_total": None, "folio": None, "exito": False}
 
-    # 1. CARGA
     img_pil = None
     try:
         if ruta_archivo.lower().endswith('.pdf'):
@@ -64,7 +61,6 @@ def procesar_boleta_chilena(ruta_archivo):
     except Exception as e:
         return {"error": f"Error archivo: {e}"}
 
-    # 2. CÓDIGO DE BARRAS
     img_limpia = limpiar_con_filtro_verde(img_pil)
     texto_codigo = None
     for img_trabajo in [img_pil.convert('L'), img_limpia]:
@@ -101,7 +97,6 @@ def procesar_boleta_chilena(ruta_archivo):
             datos["exito"] = True
             return datos
 
-    # 3. IA EASYOCR
     print("DEBUG: Iniciando IA EasyOCR...")
     try:
         img_np = np.array(img_limpia)
@@ -110,7 +105,6 @@ def procesar_boleta_chilena(ruta_archivo):
         
         print(f"DEBUG TEXTO RAW: {texto_completo[:100]}...")
 
-        # --- A. RUT ---
         if not datos["rut_emisor"]:
             candidatos = re.findall(r'(?<!\d)(\d{1,2}[\s.]?\d{3}[\s.]?\d{3}\s?[-]\s?[\dkK])', texto_completo)
             for candidato in candidatos:
@@ -118,7 +112,6 @@ def procesar_boleta_chilena(ruta_archivo):
                     datos["rut_emisor"] = candidato.replace(" ", "").replace(".", "")
                     break 
 
-        # --- B. FOLIO (CON FILTRO ANTI-RUT) ---
         if not datos["folio"]:
             claves_folio = ['FOLIO', 'FACTURA', 'ELECTRONICA', 'DOCTO', 'N', 'NO', 'NUMERO']
             
@@ -127,27 +120,22 @@ def procesar_boleta_chilena(ruta_archivo):
                 
                 if any(clave in p_limpia for clave in claves_folio):
                     
-                    # Miramos las siguientes 4 palabras
                     for offset in range(1, 5): 
                         if i + offset >= len(resultados): break
                         
                         candidato_raw = resultados[i+offset].upper()
                         
-                        # --- FILTRO 1: ¿Parece un RUT? (Tiene K o Guion) ---
                         if "K" in candidato_raw or "-" in candidato_raw:
-                            continue # Si tiene K o -, es un RUT, ignorar.
+                            continue 
 
-                        # --- FILTRO 2: ¿Es matemáticamente un RUT? ---
                         if es_rut_valido(candidato_raw):
-                            continue # Si pasa la validación de RUT, es un RUT, ignorar.
+                            continue 
 
-                        # Limpiamos para obtener solo números
                         candidato_num = re.sub(r'[^\d]', '', candidato_raw)
                         
                         if len(candidato_num) > 0:
                             val = int(candidato_num)
                             
-                            # Filtros de seguridad
                             if val in [2024, 2025, 2026]: continue # Año
                             if val == 0: continue
                             if len(candidato_num) > 9: continue # Muy largo
@@ -158,18 +146,15 @@ def procesar_boleta_chilena(ruta_archivo):
                     
                     if datos["folio"]: break
             
-            # Respaldo Regex Clásico "N°"
             if not datos["folio"]:
                 match_n = re.search(r'N[º°o0\.]\s*[:\.]?\s*(\d{1,10})', texto_completo)
                 if match_n:
-                    # Validar que lo encontrado NO sea un RUT
                     posible_folio = match_n.group(1)
                     contexto_completo = texto_completo[match_n.start():match_n.end()+2] # Miramos un poco adelante
                     
                     if "-" not in contexto_completo and "RES" not in texto_completo[max(0, match_n.start()-10):match_n.start()]:
                          datos["folio"] = posible_folio
 
-        # --- C. TOTAL ---
         if not datos["monto_total"]:
             posibles_montos = []
             matches = re.findall(r'\b(\d{1,3}(?:\.\d{3})+)\b', texto_completo)
@@ -190,7 +175,6 @@ def procesar_boleta_chilena(ruta_archivo):
             if posibles_montos:
                 datos["monto_total"] = str(max(posibles_montos))
 
-        # --- D. FECHA ---
         if not datos["fecha_emision"]:
             match_txt = re.search(r'(\d{1,2})\s+DE\s+([A-Z]+)', texto_completo)
             if match_txt:
