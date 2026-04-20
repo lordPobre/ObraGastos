@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Control de Gastos{% endblock %}</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* Gris muy suave de fondo */
+            overflow-x: hidden;
+        }
+        /* SIDEBAR ESTILO 'GLASS' O DARK */
+        .sidebar {
+            height: 100vh;       /* 1. Ocupa exactamente el 100% de la altura de la ventana */
+            position: sticky;    /* 2. Se "pega" a la pantalla */
+            top: 0;              /* 3. Se pega desde el borde superior */
+            overflow-y: auto;    /* 4. Si el menú es muy alto, aparece scroll SOLO en el menú */
+            z-index: 1000;       /* 5. Asegura que esté por encima del contenido si algo se cruza */
+            
+            /* Tus estilos visuales anteriores */
+            background: #1e293b; 
+            color: white;
+            box-shadow: 4px 0 10px rgba(0,0,0,0.05);
+        }
+
+        /* Ocultamos la barra de scroll fea del sidebar (Opcional, para Chrome/Safari) */
+        .sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .sidebar::-webkit-scrollbar-thumb {
+            background-color: rgba(255,255,255,0.2);
+            border-radius: 4px;
+        }
+        .nav-link {
+            color: #94a3b8; /* Texto grisáceo */
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin-bottom: 5px;
+            transition: all 0.2s;
+        }
+        .nav-link:hover, .nav-link.active {
+            background-color: #334155; /* Hover suave */
+            color: #fff;
+            transform: translateX(5px);
+        }
+        .nav-link i { margin-right: 10px; font-size: 1.1rem; }
+        
+        /* CARD MODERNA */
+        .card-modern {
+            border: none;
+            border-radius: 16px;
+            background: white;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            transition: transform 0.2s;
+        }
+        
+        /* HEADER USUARIO */
+        .user-pill {
+            background: white;
+            padding: 8px 16px;
+            border-radius: 50px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .empresa-badge {
+            background-color: #e0f2fe; /* Azul muy claro */
+            color: #0284c7; /* Azul intenso */
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 4px 8px;
+            border-radius: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container-fluid">
+    <div class="row flex-nowrap">
+        
+        <div class="col-auto col-md-3 col-xl-2 px-sm-2 px-0 sidebar">
+            <div class="d-flex flex-column align-items-center align-items-sm-start px-3 pt-4 text-white min-vh-100">
+                
+                <a href="/" class="d-flex align-items-center pb-3 mb-md-0 me-md-auto text-white text-decoration-none">
+                    <i class="bi bi-building-fill-gear fs-4 me-2 text-primary"></i>
+                    <span class="fs-5 fw-bold d-none d-sm-inline">Control de Gastos</span>
+                </a>
+                
+                <ul class="nav nav-pills flex-column mb-auto w-100 mt-4" id="menu">
+                    
+                    <li class="nav-item w-100">
+                        <a href="{% url 'dashboard' %}" class="nav-link align-middle px-0 {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                            <i class="bi bi-speedometer2"></i> <span class="ms-1 d-none d-sm-inline">Dashboard</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item w-100">
+                        <a href="{% url 'historial_gastos' %}" class="nav-link px-0 align-middle {% if request.resolver_match.url_name == 'historial_gastos' %}active{% endif %}">
+                            <i class="bi bi-clock-history"></i> <span class="ms-1 d-none d-sm-inline">Historial</span>
+                        </a>
+                    </li>
+                    <li class="nav-item w-100">
+                        <a href="{% url 'lista_obras' %}" class="nav-link px-0 align-middle">
+                            <i class="bi bi-buildings"></i> <span class="ms-1 d-none d-sm-inline">Proyectos</span>
+                        </a>
+                    </li>
+                    <li class="nav-item w-100 mt-2">
+                        <a href="{% url 'crear_gasto' %}" class="nav-link px-0 align-middle">
+                            <i class="bi bi-plus-circle-fill text-success fs-5"></i> 
+                            <span class="ms-1 d-none d-sm-inline fw-bold text-white">Nuevo Gasto</span>
+                        </a>
+                    </li>
+                </ul>
+                
+                <hr class="w-100 border-secondary">
+                
+                <div class="pb-4 w-100">
+                    <form action="{% url 'logout' %}" method="post">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline-danger w-100 border-0 text-start ps-0 nav-link">
+                            <i class="bi bi-box-arrow-right text-danger"></i> 
+                            <span class="ms-1 d-none d-sm-inline text-danger">Cerrar Sesión</span>
+                        </button>
+                    </form>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="col py-3 px-4">
+            
+            <div class="d-flex justify-content-between align-items-center mb-4 mt-2">
+                <div>
+                    <h4 class="fw-bold mb-0 text-dark">{% block header_title %}Panel de Control{% endblock %}</h4>
+                    <p class="text-muted small mb-0">{% now "l d \d\e F, Y" %}</p>
+                </div>
+
+                <div class="user-pill">
+                    <div class="d-flex flex-column text-end lh-1">
+                        <span class="fw-bold text-dark small">{{ user.first_name|default:user.username|title }}</span>
+                        {% if user.perfil.empresa %}
+                            <span class="text-muted" style="font-size: 10px;">{{ user.perfil.empresa.nombre }}</span>
+                        {% else %}
+                            <span class="text-muted" style="font-size: 10px;">Sin Empresa</span>
+                        {% endif %}
+                    </div>
+                    
+                    {% if user.perfil.empresa %}
+                        <div class="empresa-badge">
+                            {{ user.perfil.empresa.nombre|slice:":3" }} </div>
+                    {% else %}
+                        <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 35px; height: 35px;">
+                            <i class="bi bi-person-fill"></i>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% block content %}
+            {% endblock %}
+            
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% block scripts %}{% endblock %}
+
+</body>
+</html>

@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-6 col-lg-5">
+        
+        <div class="card border-danger shadow">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0"><i class="bi bi-exclamation-triangle-fill"></i> Confirmar Eliminación</h5>
+            </div>
+            
+            <div class="card-body text-center p-4">
+                <h5 class="card-title text-secondary mb-3">¿Estás seguro que deseas eliminar este gasto?</h5>
+                
+                <div class="alert alert-light border mb-4">
+                    <p class="mb-1"><strong>Empresa:</strong> {{ object.empresa }}</p>
+                    <p class="mb-1"><strong>Monto:</strong> ${{ object.monto }}</p>
+                    <p class="mb-0"><strong>Fecha:</strong> {{ object.fecha|date:"d/m/Y" }}</p>
+                </div>
+
+                <p class="text-danger small">Esta acción no se puede deshacer.</p>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-grid gap-2 d-md-block">
+                        <a href="{% url 'dashboard' %}" class="btn btn-secondary">Cancelar</a>
+                        <button type="submit" class="btn btn-danger">Sí, Eliminar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

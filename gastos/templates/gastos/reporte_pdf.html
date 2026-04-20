@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Helvetica, Arial, sans-serif; font-size: 12px; }
+        h1 { color: #333; text-align: center; }
+        .resumen { margin-bottom: 20px; border-bottom: 1px solid #ccc; padding-bottom: 10px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th { background-color: #f2f2f2; border-bottom: 2px solid #333; padding: 8px; text-align: left; }
+        td { border-bottom: 1px solid #ddd; padding: 8px; }
+        .total { font-weight: bold; background-color: #e8f5e9; }
+        .monto { text-align: right; }
+    </style>
+</head>
+<body>
+    <h1>Reporte de Gastos</h1>
+    
+    <div class="resumen">
+        <strong>Generado por:</strong> Sistema ObraGastos<br>
+        <strong>Fecha reporte:</strong> {% now "d/m/Y H:i" %}<br>
+        {% if fecha_inicio and fecha_fin %}
+            <strong>Periodo:</strong> Desde {{ fecha_inicio }} hasta {{ fecha_fin }}
+        {% else %}
+            <strong>Periodo:</strong> Todo el historial
+        {% endif %}
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Fecha</th>
+                <th>RUT Emisor</th>
+                <th>Folio</th>
+                <th class="monto">Monto</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for gasto in gastos %}
+            <tr>
+                <td>{{ gasto.fecha_emision|date:"d/m/Y" }}</td>
+                <td>{{ gasto.rut_emisor }}</td>
+                <td>{{ gasto.folio|default:"--" }}</td>
+                <td class="monto">${{ gasto.monto_total }}</td>
+            </tr>
+            {% endfor %}
+            <tr class="total">
+                <td colspan="3" style="text-align: right;">TOTAL GENERAL:</td>
+                <td class="monto">${{ total }}</td>
+            </tr>
+        </tbody>
+    </table>
+</body>
+</html>

@@ -1,0 +1,15 @@
+# Entornos virtuales y caché
+venv/
+env/
+__pycache__/
+*.pyc
+
+# Base de datos local
+db.sqlite3
+
+# Variables de entorno (¡Tus llaves de Microsoft!)
+.env
+
+# Archivos subidos por los usuarios
+media/
+media/boletas/

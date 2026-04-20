@@ -1,0 +1,482 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block header_title %}Panorama de Obra{% endblock %}
+
+{% block content %}
+
+<style>
+    :root {
+        --bg-body: #f8fafc;
+        --card-bg: #ffffff;
+        --shadow-soft: 0 10px 40px -10px rgba(0,0,0,0.08);
+        --radius-lg: 20px;
+        --radius-md: 14px;
+    }
+    
+    body {
+        background-color: var(--bg-body);
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    .card-neo {
+        background: var(--card-bg);
+        border: none;
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-soft);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    
+    .card-neo:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 15px 50px -10px rgba(0,0,0,0.12);
+    }
+
+    .icon-box {
+        width: 56px;
+        height: 56px;
+        border-radius: var(--radius-md);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.75rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    .grad-success { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; }
+    .grad-primary { background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: white; }
+    .grad-dark { background: linear-gradient(135deg, #334155 0%, #0f172a 100%); color: white; }
+
+    .selector-obra {
+        background-color: #ffffff;
+        border-radius: 50px;
+        padding: 5px 20px;
+        box-shadow: var(--shadow-soft);
+    }
+
+    .table-neo tbody tr {
+        transition: background-color 0.2s ease;
+    }
+
+    .table-neo tbody tr:hover {
+        background-color: #f1f5f9;
+        cursor: pointer;
+    }
+    
+    .badge-soft {
+        padding: 6px 14px;
+        border-radius: 50px;
+        font-weight: 600;
+        font-size: 0.75rem;
+        letter-spacing: 0.3px;
+    }
+</style>
+
+<div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center mb-5 mt-2 gap-3">
+    
+    <div>
+        <h3 class="fw-bold text-dark mb-1">Panel de Control</h3>
+        <p class="text-muted mb-0 small">
+            Resumen financiero al <span class="fw-bold text-primary">{% now "d \d\e F, Y" %}</span>
+        </p>
+    </div>
+
+    <div class="d-flex flex-column flex-md-row align-items-md-center gap-3">
+        <form method="get" action="{% url 'dashboard' %}" class="m-0">
+            <div class="selector-obra d-flex align-items-center bg-white px-3 py-1 rounded-pill shadow-sm border border-light">
+                <i class="bi bi-building text-indigo me-2" style="color: #6366f1;"></i>
+                <select name="obra" class="form-select border-0 bg-transparent shadow-none pe-4 fw-bold text-dark" onchange="this.form.submit();" style="cursor: pointer; min-width: 180px;">
+                    <option value="">Todos los Proyectos</option>
+                    {% for obra in obras %}
+                        <option value="{{ obra.id }}" {% if obra_seleccionada == obra.id|stringformat:"s" %}selected{% endif %}>
+                            {{ obra.nombre }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </form>
+        
+        <a href="{% url 'crear_gasto' %}" class="btn grad-primary border-0 rounded-pill shadow-sm fw-bold px-4 py-2 text-white transition d-flex align-items-center">
+            <i class="bi bi-plus-lg me-2"></i> Escanear Boleta
+        </a>
+    </div>
+</div>
+
+<div class="row g-4 mb-5">
+    
+    <div class="col-md-6 col-xl-3">
+        <div class="card-neo p-4 h-100 position-relative overflow-hidden">
+            <div class="d-flex justify-content-between align-items-start z-1 position-relative">
+                <div>
+                    <span class="text-uppercase text-muted small fw-bold tracking-wide">Ppto. Inicial</span>
+                    <h3 class="fw-bold text-dark mb-0 mt-2">${{ presupuesto_total|intcomma }}</h3>
+                </div>
+                <div class="icon-box bg-light text-secondary">
+                    <i class="bi bi-safe fs-4"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-3">
+        <div class="card-neo p-4 h-100 position-relative overflow-hidden">
+            <div class="d-flex justify-content-between align-items-start z-1 position-relative">
+                <div>
+                    <span class="text-uppercase text-muted small fw-bold tracking-wide">Gasto Real</span>
+                    <h3 class="fw-bold text-dark mb-0 mt-2">${{ total_validado|intcomma }}</h3>
+                </div>
+                <div class="icon-box grad-dark">
+                    <i class="bi bi-cash-stack fs-4"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-3">
+        <div class="card-neo p-4 h-100 position-relative overflow-hidden border-bottom border-4 {% if presupuesto_disponible < 0 %}border-danger{% else %}border-success{% endif %}">
+            <div class="d-flex justify-content-between align-items-start z-1 position-relative mb-2">
+                <div>
+                    <span class="text-uppercase text-muted small fw-bold tracking-wide">Disponible</span>
+                    <h3 class="fw-bold {% if presupuesto_disponible < 0 %}text-danger{% else %}text-success{% endif %} mb-0 mt-1">
+                        ${{ presupuesto_disponible|intcomma }}
+                    </h3>
+                </div>
+                <div class="icon-box {% if presupuesto_disponible < 0 %}bg-danger bg-opacity-10 text-danger{% else %}grad-success{% endif %}">
+                    <i class="bi bi-wallet2 fs-4"></i>
+                </div>
+            </div>
+            
+            <div class="progress mt-3" style="height: 6px; border-radius: 10px; background-color: #f1f5f9;">
+                <div class="progress-bar {% if porcentaje_gastado > 90 %}bg-danger{% elif porcentaje_gastado > 75 %}bg-warning{% else %}bg-success{% endif %}" 
+                     role="progressbar" 
+                     style="width: {% if porcentaje_gastado > 100 %}100{% else %}{{ porcentaje_gastado }}{% endif %}%;" 
+                     aria-valuenow="{{ porcentaje_gastado }}" aria-valuemin="0" aria-valuemax="100">
+                </div>
+            </div>
+            <div class="text-end mt-1">
+                <small class="text-muted fw-bold" style="font-size: 0.7rem;">{{ porcentaje_gastado }}% Consumido</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-3">
+        <div class="card-neo p-4 h-100 position-relative overflow-hidden">
+            <div class="d-flex justify-content-between align-items-start z-1 position-relative">
+                <div>
+                    <span class="text-uppercase text-muted small fw-bold tracking-wide">Docs. Leídos</span>
+                    <h3 class="fw-bold text-dark mb-0 mt-2">{{ cantidad_gastos }}</h3>
+                </div>
+                <div class="icon-box bg-indigo bg-opacity-10 text-primary" style="color: #6366f1;">
+                    <i class="bi bi-receipt-cutoff fs-4"></i>
+                </div>
+            </div>
+            <div class="position-absolute" style="top: -20px; right: -20px; width: 100px; height: 100px; background: rgba(99, 102, 241, 0.05); border-radius: 50%;"></div>
+        </div>
+    </div>
+
+</div>
+
+<div class="row g-4 mb-5">
+    <div class="col-12"> 
+        <div class="card-neo p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="fw-bold text-dark mb-0">Evolución de Gastos</h5>
+                <span class="badge bg-light text-muted border">Año Actual</span>
+            </div>
+            <div style="height: 320px; width: 100%;"> 
+                <canvas id="miGraficoMensual"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-5">
+    
+    <div class="col-lg-6"> 
+        <div class="card-neo p-4 h-100 d-flex flex-column">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="fw-bold text-dark mb-0">Control Presupuestario</h5>
+                <i class="bi bi-sliders text-muted"></i>
+            </div>
+            
+            {% if not obra_seleccionada %}
+                <div class="d-flex flex-column align-items-center justify-content-center h-100 text-center opacity-50 mt-2">
+                    <div class="bg-light rounded-circle p-4 mb-3">
+                        <i class="bi bi-hand-index-thumb fs-1 text-muted"></i>
+                    </div>
+                    <p class="fw-bold mb-0">Selecciona un proyecto arriba</p>
+                    <p class="small text-muted">para visualizar el consumo del presupuesto.</p>
+                </div>
+            {% else %}
+                <div id="fintech-trackers" class="d-flex flex-column gap-4 flex-grow-1 overflow-auto pe-2 mt-2" style="max-height: 260px;">
+                    </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="col-lg-6"> 
+        <div class="card-neo p-4 h-100">
+            <h5 class="fw-bold text-dark mb-4">Distribución por Categoría</h5>
+            <div style="height: 280px; position: relative; width: 100%;">
+                <canvas id="miGraficoTorta"></canvas>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div class="card-neo overflow-hidden mb-5">
+    
+    <div class="card-header bg-white py-4 border-bottom-0 d-flex justify-content-between align-items-center px-4">
+        <h5 class="m-0 fw-bold text-dark">Últimos Movimientos</h5>
+        <a href="{% url 'historial_gastos' %}" class="btn btn-sm btn-light fw-bold text-primary rounded-pill px-3">Ver Todos</a>
+    </div>
+    
+    <div class="table-responsive px-2 pb-2">
+        <table class="table table-neo align-middle mb-0 border-top-0">
+            <thead class="bg-transparent text-muted small text-uppercase tracking-wide">
+                <tr>
+                    <th class="ps-4 border-bottom-0">Detalle / Proveedor</th>
+                    <th class="border-bottom-0">Categoría</th>
+                    <th class="text-center border-bottom-0">Estado</th>
+                    <th class="text-end pe-4 border-bottom-0">Monto</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for gasto in ultimos_gastos %}
+                    <tr onclick="window.location.href='{% url "editar_gasto" gasto.id %}';">
+                        
+                        <td class="ps-4 py-3 border-light">
+                            <div class="fw-bold text-dark" style="font-size: 0.95rem;">
+                                {{ gasto.rut_emisor|default:"Proveedor Desconocido" }}
+                            </div>
+                            <div class="small text-muted mt-1">
+                                <span class="badge bg-light text-dark border me-1">#{{ gasto.folio|default:"S/F" }}</span> 
+                                <i class="bi bi-calendar2 me-1 ms-1"></i> {{ gasto.fecha_emision|date:"d M, Y" }}
+                            </div>
+                        </td>
+
+                        <td class="border-light">
+                            {% if gasto.categoria == 'MATERIALES' %}
+                                <span class="badge-soft bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25">🧱 Materiales</span>
+                            {% elif gasto.categoria == 'MANO_OBRA' %}
+                                <span class="badge-soft bg-warning bg-opacity-10 text-dark border border-warning border-opacity-25">👷 Mano Obra</span>
+                            {% elif gasto.categoria == 'MAQUINARIA' %}
+                                <span class="badge-soft bg-info bg-opacity-10 text-dark border border-info border-opacity-25">🚜 Maquinaria</span>
+                            {% elif gasto.categoria == 'COMBUSTIBLE' %}
+                                <span class="badge-soft bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25">⛽ Combustible</span>
+                            {% elif gasto.categoria == 'ALIMENTACION' %}
+                                <span class="badge-soft bg-success bg-opacity-10 text-success border border-success border-opacity-25">🍔 Alimentación</span>
+                            {% else %}
+                                <span class="badge-soft bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25">{{ gasto.get_categoria_display }}</span>
+                            {% endif %}
+                        </td>
+
+                        <td class="text-center border-light">
+                            {% if gasto.monto_total > 0 and gasto.rut_emisor %}
+                                <div class="bg-success bg-opacity-10 text-success d-inline-flex align-items-center justify-content-center rounded-circle" style="width: 32px; height: 32px;" title="Validado">
+                                    <i class="bi bi-check-lg fs-5"></i>
+                                </div>
+                            {% else %}
+                                <div class="bg-warning bg-opacity-10 text-warning d-inline-flex align-items-center justify-content-center rounded-circle" style="width: 32px; height: 32px;" title="Falta Info">
+                                    <i class="bi bi-exclamation-lg fs-5"></i>
+                                </div>
+                            {% endif %}
+                        </td>
+
+                        <td class="text-end pe-4 fw-bold text-dark border-light" style="font-size: 1.1rem;">
+                            ${{ gasto.monto_total|intcomma }}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center py-5 text-muted border-0">
+                            <img src="https://cdn-icons-png.flaticon.com/512/7486/7486754.png" alt="Vacío" style="width: 64px; opacity: 0.3;" class="mb-3">
+                            <p class="mb-0 fw-bold">No hay gastos registrados aún.</p>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        
+        Chart.defaults.font.family = "'Inter', sans-serif";
+        Chart.defaults.color = '#64748b';
+
+        // --- 1. LÍNEA (EVOLUCIÓN) CON DEGRADADO ---
+        const ctx = document.getElementById('miGraficoMensual').getContext('2d');
+        
+        // Crear degradado para el relleno debajo de la línea
+        let gradientFill = ctx.createLinearGradient(0, 0, 0, 400);
+        gradientFill.addColorStop(0, 'rgba(99, 102, 241, 0.4)'); // Color indigo transparente
+        gradientFill.addColorStop(1, 'rgba(99, 102, 241, 0.0)'); // Transparente total abajo
+
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: {{ labels_grafico|safe }},
+                datasets: [{
+                    label: 'Gasto Mensual',
+                    data: {{ data_grafico|safe }},
+                    borderColor: '#6366f1', // Indigo moderno
+                    backgroundColor: gradientFill,
+                    borderWidth: 3,
+                    pointBackgroundColor: '#ffffff',
+                    pointBorderColor: '#6366f1',
+                    pointBorderWidth: 2,
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    fill: true,
+                    tension: 0.4 // Curvas MUY suaves (SaaS look)
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                interaction: { intersect: false, mode: 'index' },
+                scales: {
+                    x: { grid: { display: false } },
+                    y: { 
+                        beginAtZero: true,
+                        grid: { borderDash: [4, 4], color: '#e2e8f0' },
+                        border: { display: false },
+                        ticks: { 
+                            callback: function(value) { 
+                                return '$' + value.toLocaleString('es-CL', {notation: 'compact'}); 
+                            } 
+                        }
+                    }
+                }
+            }
+        });
+
+        // --- 2. DONA (CATEGORÍAS) ---
+        const ctxPie = document.getElementById('miGraficoTorta').getContext('2d');
+        new Chart(ctxPie, {
+            type: 'doughnut',
+            data: {
+                labels: {{ labels_cat|safe }},
+                datasets: [{
+                    data: {{ data_cat|safe }},
+                    // Paleta de colores SaaS moderna
+                    backgroundColor: ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#94a3b8'],
+                    hoverOffset: 6,
+                    borderWidth: 2,
+                    borderColor: '#ffffff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                layout: { padding: 10 },
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            usePointStyle: true,
+                            pointStyle: 'circle',
+                            padding: 20,
+                            font: { size: 12, weight: '500' }
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: '#1e293b',
+                        padding: 12,
+                        cornerRadius: 8,
+                        callbacks: {
+                            label: function(c) { 
+                                return ' $' + c.parsed.toLocaleString('es-CL'); 
+                            }
+                        }
+                    }
+                },
+                cutout: '75%' // Dona más delgada y elegante
+            }
+        });
+
+        // --- 3. NUEVO CONTROL PRESUPUESTARIO (ESTILO FINTECH) ---
+        const contenedorTrackers = document.getElementById('fintech-trackers');
+        if (contenedorTrackers) {
+            const labels = {{ labels_cat|safe }};
+            const datosReal = {{ data_cat|safe }};
+            const datosPresup = {{ data_presup|safe }};
+
+            let htmlContent = '';
+
+            labels.forEach((label, index) => {
+                let real = datosReal[index] || 0;
+                let presup = datosPresup[index] || 0;
+                // Calculamos el porcentaje de consumo real
+                let porcentaje = presup > 0 ? (real / presup) * 100 : (real > 0 ? 100 : 0);
+                
+                // LÓGICA DE COLORES INTELIGENTES
+                let gradiente = 'linear-gradient(90deg, #10b981 0%, #34d399 100%)'; // Verde (Saludable)
+                let colorGlobo = 'bg-success text-white';
+                
+                if (porcentaje >= 100) {
+                    gradiente = 'linear-gradient(90deg, #ef4444 0%, #f87171 100%)'; // Rojo (Excedido)
+                    colorGlobo = 'bg-danger text-white';
+                } else if (porcentaje >= 75) {
+                    gradiente = 'linear-gradient(90deg, #f59e0b 0%, #fbbf24 100%)'; // Naranja (Peligro)
+                    colorGlobo = 'bg-warning text-dark';
+                }
+
+                let porcentajeTexto = porcentaje > 999 ? '+999' : Math.round(porcentaje);
+                let anchoBarra = porcentaje > 100 ? 100 : porcentaje; // Que la barra no se salga del contenedor
+
+                // CONSTRUCCIÓN DEL DISEÑO
+                htmlContent += `
+                    <div class="tracker-item">
+                        <div class="d-flex justify-content-between align-items-end mb-2">
+                            <span class="fw-bold text-secondary" style="font-size: 0.80rem; letter-spacing: 0.5px; text-transform: uppercase;">
+                                ${label}
+                            </span>
+                            <div class="text-end">
+                                <span class="fw-bold text-dark" style="font-size: 1.05rem;">$${real.toLocaleString('es-CL')}</span>
+                                <span class="text-muted small ms-1 fw-bold">/ $${presup.toLocaleString('es-CL')}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="progress" style="height: 10px; border-radius: 10px; background-color: #f1f5f9; overflow: visible;">
+                            <div class="progress-bar position-relative shadow-sm" 
+                                 role="progressbar" 
+                                 style="width: 0%; border-radius: 10px; background: ${gradiente}; transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);" 
+                                 data-width="${anchoBarra}%">
+                                 
+                                 <div class="position-absolute top-0 start-100 translate-middle badge ${colorGlobo} shadow-sm" 
+                                      style="margin-top: -18px; font-size: 0.75rem; padding: 5px 8px; border: 2px solid white; border-radius: 8px;">
+                                    ${porcentajeTexto}%
+                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            if (labels.length === 0) {
+                htmlContent = '<div class="text-center text-muted my-auto py-4 fw-bold"><i class="bi bi-inbox fs-2 d-block mb-2 opacity-50"></i>Sin datos de presupuesto</div>';
+            }
+
+            contenedorTrackers.innerHTML = htmlContent;
+
+            // Disparamos la animación suave de izquierda a derecha al cargar la página
+            setTimeout(() => {
+                const barras = contenedorTrackers.querySelectorAll('.progress-bar');
+                barras.forEach(barra => {
+                    barra.style.width = barra.getAttribute('data-width');
+                });
+            }, 100);
+        }
+    });
+</script>
+{% endblock %}

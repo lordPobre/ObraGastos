@@ -1,0 +1,301 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block header_title %}Historial de Gastos{% endblock %}
+
+{% block content %}
+<style>
+    :root {
+        --bg-body: #f8fafc;
+        --card-bg: #ffffff;
+        --shadow-soft: 0 10px 40px -10px rgba(0,0,0,0.08);
+        --shadow-sm: 0 2px 10px rgba(0,0,0,0.03);
+        --radius-lg: 20px;
+        --radius-md: 12px;
+    }
+    
+    body {
+        background-color: var(--bg-body);
+        font-family: 'Inter', -apple-system, sans-serif;
+    }
+
+    .card-neo {
+        background: var(--card-bg);
+        border: none;
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-soft);
+    }
+
+    .form-control-neo, .form-select-neo {
+        border: 1px solid #e2e8f0;
+        border-radius: var(--radius-md);
+        padding: 0.6rem 1rem;
+        background-color: #f8fafc;
+        transition: all 0.2s ease;
+    }
+    
+    .form-control-neo:focus, .form-select-neo:focus {
+        background-color: #ffffff;
+        border-color: #6366f1;
+        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+    }
+
+    .table-neo {
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+    
+    .table-neo thead th {
+        border-bottom: 1px solid #e2e8f0;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.5px;
+        font-weight: 700;
+        color: #64748b;
+        padding-bottom: 1rem;
+    }
+
+    .table-neo tbody tr {
+        transition: background-color 0.2s ease;
+    }
+    
+    .table-neo tbody tr:hover {
+        background-color: #f1f5f9;
+    }
+
+    .table-neo td {
+        border-bottom: 1px solid #f1f5f9;
+        padding: 1.2rem 0.5rem;
+        vertical-align: middle;
+    }
+
+    .btn-action {
+        width: 36px;
+        height: 36px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+        transition: all 0.2s;
+    }
+    
+    .btn-action:hover {
+        transform: translateY(-2px);
+    }
+
+    .badge-soft {
+        padding: 6px 12px;
+        border-radius: 50px;
+        font-weight: 600;
+        font-size: 0.75rem;
+    }
+</style>
+
+<div class="container-fluid py-4">
+    
+    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center mb-5 gap-4">
+        <div>
+            <h3 class="fw-bold text-dark mb-1">Historial de Documentos</h3>
+            <p class="text-muted mb-0 small">Gestiona, filtra y exporta tus boletas y facturas</p>
+        </div>
+
+        <div class="d-flex flex-wrap gap-3 align-items-center">
+            <div class="dropdown">
+                <button class="btn bg-white border border-2 text-dark fw-bold rounded-pill px-4 py-2 shadow-sm d-flex align-items-center" type="button" id="dropdownExport" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-cloud-download me-2 text-primary"></i> Exportar
+                </button>
+                <ul class="dropdown-menu border-0 shadow-lg rounded-4 overflow-hidden" aria-labelledby="dropdownExport">
+                    <li>
+                        <a class="dropdown-item py-2 px-4 d-flex align-items-center" href="#" onclick="descargarReporte('{% url 'exportar_excel' %}')">
+                            <div class="bg-success bg-opacity-10 text-success rounded p-2 me-3"><i class="bi bi-file-earmark-excel-fill"></i></div>
+                            <span class="fw-bold text-secondary">Excel (.xlsx)</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item py-2 px-4 d-flex align-items-center" href="#" onclick="descargarReporte('{% url 'exportar_pdf' %}')">
+                            <div class="bg-danger bg-opacity-10 text-danger rounded p-2 me-3"><i class="bi bi-file-earmark-pdf-fill"></i></div>
+                            <span class="fw-bold text-secondary">PDF (.pdf)</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="bg-white px-4 py-2 rounded-pill shadow-sm border border-light d-flex align-items-center gap-3">
+                <div class="bg-success bg-opacity-10 text-success rounded-circle d-flex justify-content-center align-items-center" style="width: 40px; height: 40px;">
+                    <i class="bi bi-currency-dollar fs-5"></i>
+                </div>
+                <div>
+                    <small class="text-muted d-block text-uppercase fw-bold" style="font-size: 0.65rem; letter-spacing: 0.5px;">Total Filtrado</small>
+                    <span class="fs-4 fw-bold text-dark">${{ total_filtrado|intcomma }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card-neo mb-5">
+        <div class="card-header bg-transparent border-bottom-0 pt-4 pb-0 px-4">
+            <h6 class="mb-0 fw-bold text-dark"><i class="bi bi-funnel me-2 text-primary"></i>Filtros de Búsqueda</h6>
+        </div>
+        <div class="card-body p-4">
+            <form method="get" class="row g-3 align-items-end">
+                
+                <div class="col-md-6 col-lg-2">
+                    <label class="form-label small fw-bold text-secondary">Desde</label>
+                    <input type="date" name="fecha_inicio" class="form-control form-control-neo text-muted fw-bold" value="{{ fecha_inicio }}">
+                </div>
+                
+                <div class="col-md-6 col-lg-2">
+                    <label class="form-label small fw-bold text-secondary">Hasta</label>
+                    <input type="date" name="fecha_fin" class="form-control form-control-neo text-muted fw-bold" value="{{ fecha_fin }}">
+                </div>
+
+                <div class="col-md-6 col-lg-3">
+                    <label class="form-label small fw-bold text-secondary">Proyecto / Obra</label>
+                    <select name="obra_id" class="form-select form-select-neo fw-bold text-dark">
+                        <option value="">Todos los proyectos</option>
+                        {% for obra in obras %}
+                            <option value="{{ obra.id }}" {% if obra.id|stringformat:"s" == obra_seleccionada %}selected{% endif %}>
+                                {{ obra.nombre }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-md-6 col-lg-3">
+                    <label class="form-label small fw-bold text-secondary">Categoría</label>
+                    <select name="categoria" class="form-select form-select-neo fw-bold text-dark">
+                        <option value="">Todas las categorías</option>
+                        {% for cat in categorias_disponibles %}
+                            <option value="{{ cat.valor_db }}" {% if cat.valor_db == categoria_seleccionada %}selected{% endif %}>
+                                {{ cat.nombre_visible }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-lg-2 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary rounded-3 w-100 fw-bold shadow-sm">
+                        Buscar
+                    </button>
+                    {% if fecha_inicio or fecha_fin or obra_seleccionada or categoria_seleccionada %}
+                        <a href="{% url 'historial_gastos' %}" class="btn bg-light text-secondary rounded-3 border shadow-sm" title="Limpiar Filtros">
+                            <i class="bi bi-x-lg"></i>
+                        </a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <form method="post" action="{% url 'eliminar_masivo' %}" id="form-masivo">
+        {% csrf_token %}
+        
+        <input type="hidden" name="fecha_inicio_filtro" value="{{ fecha_inicio|default:'' }}">
+        <input type="hidden" name="fecha_fin_filtro" value="{{ fecha_fin|default:'' }}">
+        <input type="hidden" name="obra_id_filtro" value="{{ obra_seleccionada|default:'' }}">
+        <input type="hidden" name="categoria_filtro" value="{{ categoria_seleccionada|default:'' }}">
+
+        <div class="d-flex justify-content-between align-items-center mb-3 px-2">
+            <div class="text-muted small fw-bold">
+                Mostrando <span class="text-primary">{{ gastos|length }}</span> registros
+            </div>
+            <button type="submit" class="btn btn-sm bg-danger bg-opacity-10 text-danger border-0 fw-bold rounded-pill px-3 py-2 transition" 
+                    onclick="return confirm('¿Estás seguro de eliminar los gastos seleccionados permanentemente?')">
+                <i class="bi bi-trash3-fill me-1"></i> Eliminar Selección
+            </button>
+        </div>
+
+        <div class="card-neo overflow-hidden">
+            <div class="table-responsive px-4 pb-3">
+                <table class="table table-neo align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th class="ps-2" style="width: 40px;">
+                                <input type="checkbox" class="form-check-input" id="check-all" style="transform: scale(1.1);">
+                            </th>
+                            <th>Emisión</th>
+                            <th>Proveedor</th>
+                            <th>Folio</th>
+                            <th class="text-end">Total</th>
+                            <th class="text-center">Evidencia</th>
+                            <th class="text-end pe-3">Gestión</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for gasto in gastos %}
+                        <tr>
+                            <td class="ps-2">
+                                <input type="checkbox" name="gastos_ids" value="{{ gasto.id }}" class="form-check-input check-item" style="transform: scale(1.1);">
+                            </td>
+                            
+                            <td>
+                                <div class="fw-bold text-dark">{{ gasto.fecha_emision|date:"d M, Y" }}</div>
+                                <div class="small text-muted">{{ gasto.fecha_emision|date:"Y" }}</div>
+                            </td>
+                            
+                            <td>
+                                <div class="fw-bold text-dark">{{ gasto.rut_emisor|default:"Sin Registrar" }}</div>
+                                {% if gasto.categoria %}
+                                    <div class="small text-muted mt-1" style="font-size: 0.7rem;">
+                                        {{ gasto.get_categoria_display|upper }}
+                                    </div>
+                                {% endif %}
+                            </td>
+                            
+                            <td>
+                                <span class="badge-soft bg-light text-secondary border"># {{ gasto.folio|default:"S/F" }}</span>
+                            </td>
+                            
+                            <td class="text-end">
+                                <span class="fw-bold text-dark fs-6">${{ gasto.monto_total|intcomma }}</span>
+                            </td>
+                            
+                            <td class="text-center">
+                                {% if gasto.imagen %}
+                                    <div class="d-flex justify-content-center gap-2">
+                                        <a href="{{ gasto.imagen.url }}" target="_blank" class="btn-action bg-light text-primary border" title="Ver archivo">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a href="{% url 'descargar_pdf' gasto.id %}" class="btn-action bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25" title="Descargar PDF">
+                                            <i class="bi bi-filetype-pdf"></i>
+                                        </a>
+                                    </div>
+                                {% else %}
+                                    <span class="badge-soft bg-light text-muted border border-dashed">Sin Doc</span>
+                                {% endif %}
+                            </td>
+                            
+                            <td class="text-end pe-3">
+                                <a href="{% url 'editar_gasto' gasto.id %}" class="btn-action bg-indigo bg-opacity-10 text-primary border border-primary border-opacity-25" title="Editar">
+                                    <i class="bi bi-pencil-square"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-5 border-0">
+                                <img src="https://cdn-icons-png.flaticon.com/512/7486/7486754.png" alt="Vacío" style="width: 80px; opacity: 0.2;" class="mb-3">
+                                <h6 class="fw-bold text-dark">No hay registros</h6>
+                                <p class="text-muted small">No se encontraron documentos con los filtros aplicados.</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+    document.getElementById('check-all').addEventListener('change', function() {
+        const checkboxes = document.querySelectorAll('.check-item');
+        checkboxes.forEach(cb => cb.checked = this.checked);
+    });
+
+    function descargarReporte(urlBase) {
+        const params = new URLSearchParams(window.location.search);
+        window.location.href = urlBase + "?" + params.toString();
+    }
+</script>
+{% endblock %}

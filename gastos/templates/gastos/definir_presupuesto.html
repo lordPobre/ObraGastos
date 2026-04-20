@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block header_title %}Presupuesto de Obra{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h5 class="fw-bold mb-1">{{ obra.nombre }}</h5>
+                <p class="text-muted mb-0">Define los límites de gasto por categoría</p>
+            </div>
+            <a href="{% url 'lista_obras' %}" class="btn btn-light border">Volver</a>
+        </div>
+
+        <div class="card-modern p-4">
+            <form method="post">
+                {% csrf_token %}
+                
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="ps-3">Categoría</th>
+                                <th style="width: 200px;">Presupuesto ($)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in datos_tabla %}
+                            <tr>
+                                <td class="ps-3 fw-bold text-secondary">
+                                    {{ item.nombre }}
+                                </td>
+                                <td>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-white text-muted border-end-0">$</span>
+                                        <input type="number" 
+                                               name="presupuesto_{{ item.codigo }}" 
+                                               value="{{ item.monto_actual }}" 
+                                               class="form-control border-start-0 fw-bold text-dark" 
+                                               min="0"
+                                               placeholder="0">
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="d-grid mt-4">
+                    <button type="submit" class="btn btn-primary btn-lg shadow-sm">
+                        <i class="bi bi-save me-2"></i> Guardar Presupuesto
+                    </button>
+                </div>
+            </form>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
