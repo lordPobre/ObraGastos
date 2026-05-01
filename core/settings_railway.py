@@ -80,11 +80,13 @@ if R2_BUCKET_NAME:
     AWS_SECRET_ACCESS_KEY = R2_SECRET_KEY
     AWS_S3_ENDPOINT_URL = f'https://{R2_ACCOUNT_ID}.r2.cloudflarestorage.com'
     AWS_S3_CUSTOM_DOMAIN = R2_CUSTOM_DOMAIN or None
-    AWS_DEFAULT_ACL = 'public-read'
+    AWS_DEFAULT_ACL = None          # R2 no soporta ACLs
+    AWS_S3_OBJECT_PARAMETERS = {}   # sin parámetros extra
     AWS_S3_FILE_OVERWRITE = False
+    AWS_QUERYSTRING_AUTH = False     # URLs públicas sin firma
+    AWS_S3_SIGNATURE_VERSION = 's3v4'
     MEDIA_URL = f'https://{R2_CUSTOM_DOMAIN}/' if R2_CUSTOM_DOMAIN else f'{AWS_S3_ENDPOINT_URL}/{R2_BUCKET_NAME}/'
 else:
-
     MEDIA_URL = '/media/'
     MEDIA_ROOT = BASE_DIR / 'media'
 
