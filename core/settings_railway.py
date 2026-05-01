@@ -1,3 +1,20 @@
+"""
+settings.py — Producción para Railway
+
+Variables de entorno requeridas en Railway:
+  SECRET_KEY        → clave secreta Django (genera una nueva)
+  DATABASE_URL      → se inyecta automáticamente por Railway PostgreSQL
+  ALLOWED_HOSTS     → tu dominio Railway, ej: obragastos.up.railway.app
+  R2_BUCKET_NAME    → nombre del bucket Cloudflare R2
+  R2_ACCOUNT_ID     → ID de cuenta Cloudflare
+  R2_ACCESS_KEY     → Access Key ID de R2
+  R2_SECRET_KEY     → Secret Access Key de R2
+  R2_CUSTOM_DOMAIN  → dominio público del bucket (opcional)
+  MS_CLIENT_ID      → credenciales SharePoint (igual que antes)
+  MS_TENANT_ID
+  MS_CLIENT_SECRET
+  MS_SITE_ID
+"""
 from pathlib import Path
 import os
 import dj_database_url
