@@ -122,3 +122,7 @@ LOGGING = {
         },
     },
 }
+
+import logging
+_log = logging.getLogger(__name__)
+_log.warning(f"CLOUDINARY_URL presente: {bool(CLOUDINARY_URL)} valor: {CLOUDINARY_URL[:20] if CLOUDINARY_URL else 'VACIO'}")
