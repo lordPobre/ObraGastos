@@ -224,6 +224,9 @@ def crear_gasto(request):
                         import tempfile
                         import requests as req
                         url = gasto.imagen.url
+                        if 'cloudinary' in url:
+                            # Asegurar que sea el archivo original sin transformar
+                            url = url.replace('/image/upload/', '/raw/upload/')
                         resp = req.get(url, timeout=30)
                         sufijo = '.' + str(gasto.imagen).split('.')[-1] if '.' in str(gasto.imagen) else '.pdf'
                         with tempfile.NamedTemporaryFile(delete=False, suffix=sufijo) as tmp:
