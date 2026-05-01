@@ -1,12 +1,4 @@
-"""
-Configuración Django.
 
-CORRECCIONES:
-- Logging configurado (reemplaza los print())
-- ALLOWED_HOSTS desde .env
-- Cabeceras de seguridad básicas
-- Configuración de tamaño máximo de upload
-"""
 from pathlib import Path
 import os
 from dotenv import load_dotenv
@@ -15,7 +7,6 @@ load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# --- SEGURIDAD ---
 SECRET_KEY = os.getenv('SECRET_KEY', 'change-me-in-production')
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
@@ -23,7 +14,6 @@ ALLOWED_HOSTS = [
     h.strip() for h in os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',') if h.strip()
 ]
 
-# Cabeceras de seguridad
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'SAMEORIGIN'
@@ -35,7 +25,6 @@ if not DEBUG:
     SECURE_HSTS_SECONDS = 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 
-# --- APPS ---
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -77,7 +66,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'core.wsgi.application'
 
-# --- BASE DE DATOS ---
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -85,7 +73,6 @@ DATABASES = {
     }
 }
 
-# --- VALIDACIÓN DE CONTRASEÑAS ---
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
@@ -93,37 +80,31 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-# --- LOCALIZACIÓN ---
 LANGUAGE_CODE = 'es-cl'
 TIME_ZONE = 'America/Santiago'
 USE_I18N = True
 USE_L10N = True
 USE_TZ = True
 
-# --- ARCHIVOS ESTÁTICOS Y MEDIA ---
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-# Tamaño máximo de uploads (50 MB para soporte de carga masiva grande)
 DATA_UPLOAD_MAX_MEMORY_SIZE = 50 * 1024 * 1024
 FILE_UPLOAD_MAX_MEMORY_SIZE = 50 * 1024 * 1024
 DATA_UPLOAD_MAX_NUMBER_FILES = 200
 
-# --- AUTENTICACIÓN ---
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/login/'
 LOGIN_URL = '/login/'
 
-# --- MICROSOFT GRAPH (SHAREPOINT) ---
 MS_CLIENT_ID = os.getenv('MS_CLIENT_ID')
 MS_TENANT_ID = os.getenv('MS_TENANT_ID')
 MS_CLIENT_SECRET = os.getenv('MS_CLIENT_SECRET')
 MS_SITE_ID = os.getenv('MS_SITE_ID')
 
-# --- LOGGING ---
 LOGS_DIR = BASE_DIR / 'logs'
 LOGS_DIR.mkdir(exist_ok=True)
 
