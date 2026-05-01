@@ -210,30 +210,26 @@ def crear_gasto(request):
             if empresa:
                 gasto.empresa = empresa
 
-            gasto.save()
-
-            # OCR
-            # OCR
+            # OCR ANTES de subir a Cloudinary — procesar desde request.FILES
             ocr_exitoso = False
-            if gasto.imagen:
+            archivo = request.FILES.get('imagen')
+            if archivo:
                 try:
-                    try:
-                        ruta = gasto.imagen.path
-                    except (NotImplementedError, AttributeError):
-                        # Cloudinary o S3 — descargamos temporalmente
-                        import tempfile
-                        import requests as req
-                        url = gasto.imagen.url
-                        if 'cloudinary' in url:
-                            # Asegurar que sea el archivo original sin transformar
-                            url = url.replace('/image/upload/', '/raw/upload/')
-                        resp = req.get(url, timeout=30)
-                        sufijo = '.' + str(gasto.imagen).split('.')[-1] if '.' in str(gasto.imagen) else '.pdf'
-                        with tempfile.NamedTemporaryFile(delete=False, suffix=sufijo) as tmp:
-                            tmp.write(resp.content)
-                            ruta = tmp.name
+                    sufijo = '.' + archivo.name.split('.')[-1] if '.' in archivo.name else '.pdf'
+                    with tempfile.NamedTemporaryFile(delete=False, suffix=sufijo) as tmp:
+                        for chunk in archivo.chunks():
+                            tmp.write(chunk)
+                        ruta_tmp = tmp.name
 
-                    resultado = procesar_boleta_chilena(ruta)
+                    # Resetear puntero para que Django lo suba a Cloudinary
+                    archivo.seek(0)
+
+                    resultado = procesar_boleta_chilena(ruta_tmp)
+
+                    try:
+                        os.remove(ruta_tmp)
+                    except Exception:
+                        pass
 
                     if 'error' not in resultado:
                         if resultado.get('monto_total'):
@@ -251,18 +247,19 @@ def crear_gasto(request):
                                 pass
 
                         gasto.procesado_exitosamente = True
-                        gasto.save()
                         ocr_exitoso = True
                         messages.success(request, "¡Boleta leída! Por favor confirma los datos.")
                     else:
                         gasto.nota_error = resultado.get('error', 'Error desconocido')
-                        gasto.save()
                         messages.warning(request, f"Escáner: {resultado['error']}")
+
                 except Exception as e:
-                    logger.exception(f"Error procesando imagen del gasto #{gasto.id}")
+                    logger.exception(f"Error procesando OCR")
                     messages.warning(request, f"Error procesando imagen: {e}")
 
-            # Backup en SharePoint solo si todo OK
+            # Guardar el gasto (aquí sube la imagen a Cloudinary)
+            gasto.save()
+
             if ocr_exitoso:
                 try:
                     respaldar_en_sharepoint(gasto)
