@@ -225,7 +225,7 @@ def crear_gasto(request):
                         import requests as req
                         url = gasto.imagen.url
                         resp = req.get(url, timeout=30)
-                        sufijo = '.' + gasto.imagen.name.split('.')[-1] if '.' in str(gasto.imagen.name) else '.pdf'
+                        sufijo = '.' + str(gasto.imagen).split('.')[-1] if '.' in str(gasto.imagen) else '.pdf'
                         with tempfile.NamedTemporaryFile(delete=False, suffix=sufijo) as tmp:
                             tmp.write(resp.content)
                             ruta = tmp.name
