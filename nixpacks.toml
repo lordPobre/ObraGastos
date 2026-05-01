@@ -3,8 +3,9 @@
 
 [phases.setup]
 nixPkgs = [
+    "python312",
     "tesseract",
-    "tesseract-lang",   # incluye spa.traineddata (español)
+    "tesseract-lang",
 ]
 
 [phases.build]
