@@ -23,7 +23,6 @@ INSTALLED_APPS = [
     'django.contrib.humanize',
     'cloudinary_storage',
     'cloudinary',
-    'storages',
     'gastos',
 ]
 
