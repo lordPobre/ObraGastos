@@ -296,10 +296,17 @@ def editar_gasto(request, pk):
     else:
         form = GastoForm(request.user, instance=gasto)
 
+    preview_url = None
+    if gasto.imagen:
+        preview_url = gasto.imagen.url
+        if preview_url and '.pdf' in preview_url.lower() and '/upload/' in preview_url:
+            preview_url = preview_url.replace('/upload/', '/upload/fl_attachment:false/', 1)
+
     return render(request, 'gastos/editar_gasto.html', {
         'form': form,
         'titulo': f'Editar Gasto #{gasto.folio or gasto.id}',
-        'gasto': gasto
+        'gasto': gasto,
+        'preview_url': preview_url,
     })
 
 
