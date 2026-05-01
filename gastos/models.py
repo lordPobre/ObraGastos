@@ -81,7 +81,7 @@ class Gasto(models.Model):
         db_index=True
     )
 
-    imagen = CloudinaryField('boleta', resource_type='raw', blank=True, null=True)
+    imagen = CloudinaryField('boleta', resource_type='auto', blank=True, null=True)
     fecha_subida = models.DateTimeField(auto_now_add=True)
 
     rut_emisor = models.CharField(max_length=20, blank=True, null=True, db_index=True)

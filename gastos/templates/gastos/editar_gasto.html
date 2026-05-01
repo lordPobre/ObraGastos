@@ -259,20 +259,25 @@
                 {% endif %}
             </div>
 
+            {% with img_url=gasto.imagen.url %}
             {% if gasto.imagen %}
-                {% with img_url=gasto.imagen.url %}
-                {% if '.pdf' in img_url|lower or '.pdf' in gasto.imagen.name|lower %}
-                    <iframe src="{{ img_url }}" class="preview-pdf" title="Boleta PDF"></iframe>
+                {% if '.pdf' in gasto.imagen.name|lower %}
+                    {# Cloudinary convierte PDF a imagen automáticamente con fl_attachment=false #}
+                    <img src="{{ img_url }}" 
+                        alt="Boleta" 
+                        class="preview-image" 
+                        loading="lazy"
+                        onerror="this.style.display='none'; document.getElementById('pdf-fallback').style.display='block'">
+                    <iframe id="pdf-fallback" 
+                            src="{{ img_url }}" 
+                            class="preview-pdf" 
+                            style="display:none" 
+                            title="Boleta PDF"></iframe>
                 {% else %}
                     <img src="{{ img_url }}" alt="Boleta cargada" class="preview-image" loading="lazy">
                 {% endif %}
-                {% endwith %}
-            {% else %}
-                <div class="preview-empty">
-                    <i class="bi bi-image" style="font-size: 36px;"></i>
-                    <span style="font-size: 13px;">Sin imagen adjunta</span>
-                </div>
             {% endif %}
+            {% endwith %}
         </div>
     </div>
 
