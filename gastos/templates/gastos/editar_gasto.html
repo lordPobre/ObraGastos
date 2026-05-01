@@ -237,7 +237,7 @@
                     Boleta original
                 </h3>
                 {% if gasto.imagen %}
-                <a href="{% url 'descargar_pdf' gasto.pk %}" class="download-link">
+                <a href="{{ gasto.imagen.url }}" class="download-link" target="_blank">
                     <i class="bi bi-download"></i> Descargar
                 </a>
                 {% endif %}
@@ -261,13 +261,10 @@
 
             {% if gasto.imagen %}
                 {% with img_url=gasto.imagen.url %}
-                {% if '.pdf' in img_url|lower %}
+                {% if '.pdf' in img_url|lower or '.pdf' in gasto.imagen.name|lower %}
                     <iframe src="{{ img_url }}" class="preview-pdf" title="Boleta PDF"></iframe>
                 {% else %}
-                    <img src="{{ img_url }}"
-                         alt="Boleta cargada"
-                         class="preview-image"
-                         loading="lazy">
+                    <img src="{{ img_url }}" alt="Boleta cargada" class="preview-image" loading="lazy">
                 {% endif %}
                 {% endwith %}
             {% else %}
