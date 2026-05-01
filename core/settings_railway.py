@@ -19,9 +19,9 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+    'cloudinary_storage',
     'django.contrib.staticfiles',
     'django.contrib.humanize',
-    'cloudinary_storage',
     'cloudinary',
     'gastos',
 ]
@@ -126,3 +126,5 @@ LOGGING = {
 import logging
 _log = logging.getLogger(__name__)
 _log.warning(f"CLOUDINARY_URL presente: {bool(CLOUDINARY_URL)} valor: {CLOUDINARY_URL[:20] if CLOUDINARY_URL else 'VACIO'}")
+
+_log.warning(f"DEFAULT_FILE_STORAGE: {DEFAULT_FILE_STORAGE}")
