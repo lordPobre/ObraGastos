@@ -1,16 +1,3 @@
-"""
-Vistas del módulo de gastos.
-
-CORRECCIONES APLICADAS RESPECTO A LA VERSIÓN ANTERIOR:
-- TODAS las vistas validan empresa del usuario (corrige fugas multi-tenant)
-- exportar_excel y exportar_pdf filtran por empresa
-- editar_gasto, eliminar_gasto y descargar_boleta_pdf validan pertenencia
-- carga_masiva ahora asigna empresa correctamente (BUG CRÍTICO corregido)
-- nuevo_gasto eliminada (era duplicada e insegura)
-- Selector de obra persiste en sesión
-- Logging en vez de print()
-- Manejo seguro de excepciones
-"""
 import io
 import os
 import logging
@@ -35,6 +22,8 @@ from .models import Gasto, Empresa, Obra, Presupuesto
 from .forms import GastoForm, CargaMasivaForm, ObraForm
 from .utils import procesar_boleta_chilena
 from .sharepoint import respaldar_en_sharepoint
+import tempfile
+import requests as req
 
 logger = logging.getLogger(__name__)
 
@@ -224,10 +213,20 @@ def crear_gasto(request):
             gasto.save()
 
             # OCR
+            # OCR
             ocr_exitoso = False
             if gasto.imagen:
                 try:
-                    resultado = procesar_boleta_chilena(gasto.imagen.path)
+                    try:
+                        ruta = gasto.imagen.path
+                    except NotImplementedError:
+                        resp = req.get(gasto.imagen.url, timeout=30)
+                        sufijo = '.' + gasto.imagen.name.split('.')[-1]
+                        with tempfile.NamedTemporaryFile(delete=False, suffix=sufijo) as tmp:
+                            tmp.write(resp.content)
+                            ruta = tmp.name
+
+                    resultado = procesar_boleta_chilena(ruta)
 
                     if 'error' not in resultado:
                         if resultado.get('monto_total'):
@@ -235,7 +234,7 @@ def crear_gasto(request):
                         if resultado.get('rut_emisor'):
                             gasto.rut_emisor = resultado['rut_emisor']
                         if resultado.get('folio'):
-                            gasto.folio = str(resultado['folio'])  # Preservar string
+                            gasto.folio = str(resultado['folio'])
 
                         fecha_str = resultado.get('fecha_emision')
                         if fecha_str:
