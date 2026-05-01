@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator
+from cloudinary.models import CloudinaryField
 
 
 class Empresa(models.Model):
@@ -80,7 +81,7 @@ class Gasto(models.Model):
         db_index=True
     )
 
-    imagen = models.FileField(upload_to='boletas/%Y/%m/', verbose_name="Boleta o Factura")
+    imagen = CloudinaryField('boleta', resource_type='raw', blank=True, null=True)
     fecha_subida = models.DateTimeField(auto_now_add=True)
 
     rut_emisor = models.CharField(max_length=20, blank=True, null=True, db_index=True)
