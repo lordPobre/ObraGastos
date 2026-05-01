@@ -261,20 +261,25 @@
 
             {% with img_url=gasto.imagen.url %}
             {% if gasto.imagen %}
-                {% if '.pdf' in gasto.imagen.name|lower %}
-                    {# Cloudinary convierte PDF a imagen automáticamente con fl_attachment=false #}
-                    <img src="{{ img_url }}" 
-                        alt="Boleta" 
-                        class="preview-image" 
+                {% if '.pdf' in gasto.imagen.name|lower or '.pdf' in img_url|lower %}
+                    <img src="{{ img_url }}"
+                        alt="Boleta"
+                        class="preview-image"
                         loading="lazy"
                         onerror="this.style.display='none'; document.getElementById('pdf-fallback').style.display='block'">
-                    <iframe id="pdf-fallback" 
-                            src="{{ img_url }}" 
-                            class="preview-pdf" 
-                            style="display:none" 
+                    <iframe id="pdf-fallback"
+                            src="{{ img_url }}"
+                            class="preview-pdf"
+                            style="display:none"
                             title="Boleta PDF"></iframe>
                 {% else %}
-                    <img src="{{ img_url }}" alt="Boleta cargada" class="preview-image" loading="lazy">
+                    <img src="{{ img_url }}" alt="Boleta cargada" class="preview-image" loading="lazy"
+                         onerror="this.style.display='none'; document.getElementById('pdf-fallback').style.display='block'">
+                    <iframe id="pdf-fallback"
+                            src="{{ img_url }}"
+                            class="preview-pdf"
+                            style="display:none"
+                            title="Boleta PDF"></iframe>
                 {% endif %}
             {% endif %}
             {% endwith %}
