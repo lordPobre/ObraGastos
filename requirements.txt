@@ -21,9 +21,11 @@ zxing-cpp==2.2.1
 beautifulsoup4==4.12.3
 lxml==5.2.1
 
-# Exportación
-openpyxl==3.1.2
+# Exportación PDF/Excel
+reportlab==4.1.0
+pycairo==1.26.0
 xhtml2pdf==0.2.16
+openpyxl==3.1.2
 
 # SharePoint
 requests==2.31.0

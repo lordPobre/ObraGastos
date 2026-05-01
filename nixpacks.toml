@@ -1,17 +1,14 @@
-# nixpacks.toml — le dice a Railway qué paquetes del sistema instalar
-# Tesseract OCR con idioma español incluido
-
 [phases.setup]
 nixPkgs = [
-    "python312",
     "tesseract",
     "tesseract-lang",
+    "cairo",
+    "pkg-config",
+    "gobject-introspection",
 ]
 
-[phases.build]
-cmds = [
-    "pip install -r requirements.txt"
-]
+[phases.install]
+cmds = ["pip install -r requirements.txt"]
 
 [start]
 cmd = "gunicorn core.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --timeout 120"
