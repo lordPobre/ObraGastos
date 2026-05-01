@@ -219,9 +219,13 @@ def crear_gasto(request):
                 try:
                     try:
                         ruta = gasto.imagen.path
-                    except NotImplementedError:
-                        resp = req.get(gasto.imagen.url, timeout=30)
-                        sufijo = '.' + gasto.imagen.name.split('.')[-1]
+                    except (NotImplementedError, AttributeError):
+                        # Cloudinary o S3 — descargamos temporalmente
+                        import tempfile
+                        import requests as req
+                        url = gasto.imagen.url
+                        resp = req.get(url, timeout=30)
+                        sufijo = '.' + gasto.imagen.name.split('.')[-1] if '.' in str(gasto.imagen.name) else '.pdf'
                         with tempfile.NamedTemporaryFile(delete=False, suffix=sufijo) as tmp:
                             tmp.write(resp.content)
                             ruta = tmp.name
