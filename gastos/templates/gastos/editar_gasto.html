@@ -260,21 +260,22 @@
             </div>
 
             {% if gasto.imagen %}
-                {% with img_url=preview_url|default:gasto.imagen.url %}
-                {% if '.pdf' in gasto.imagen.name|lower or '.pdf' in img_url|lower %}
-                    <iframe src="{{ img_url }}"
-                            class="preview-pdf"
-                            title="Boleta PDF"></iframe>
-                {% else %}
-                    <img src="{{ img_url }}" alt="Boleta cargada" class="preview-image" loading="lazy"
-                         onerror="this.style.display='none'; document.getElementById('pdf-fallback').style.display='block'">
-                    <iframe id="pdf-fallback"
-                            src="{{ img_url }}"
-                            class="preview-pdf"
-                            style="display:none"
-                            title="Boleta PDF"></iframe>
-                {% endif %}
+            {% with img_url=gasto.imagen.url %}
+
+            {% if '.pdf' in gasto.imagen.name|lower %}
+                {# Cloudinary convierte PDF a JPG agregando /pg_1/ y cambiando extensión #}
+                {% with preview_url=img_url|cut:".pdf"|add:".jpg" %}
+                <img src="{{ preview_url }}"
+                    alt="Boleta"
+                    class="preview-image"
+                    loading="lazy"
+                    onerror="this.src='{{ img_url }}'">
                 {% endwith %}
+            {% else %}
+                <img src="{{ img_url }}" alt="Boleta" class="preview-image" loading="lazy">
+            {% endif %}
+
+            {% endwith %}
             {% endif %}
         </div>
     </div>
