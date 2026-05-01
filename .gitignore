@@ -14,7 +14,7 @@ env/
 *.log
 local_settings.py
 db.sqlite3
-staticfiles/
+#staticfiles/
 media/
 
 # VS Code
