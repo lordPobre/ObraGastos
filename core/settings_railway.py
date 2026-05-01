@@ -1,30 +1,8 @@
 from pathlib import Path
 import os
+import logging
 import dj_database_url
 from dotenv import load_dotenv
-import cloudinary
-
-cloudinary.config(
-    cloud_name=os.getenv('CLOUDINARY_CLOUD_NAME', ''),
-    api_key=os.getenv('CLOUDINARY_API_KEY', ''),
-    api_secret=os.getenv('CLOUDINARY_API_SECRET', ''),
-    secure=True
-)
-
-CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': os.getenv('CLOUDINARY_CLOUD_NAME', ''),
-    'API_KEY': os.getenv('CLOUDINARY_API_KEY', ''),
-    'API_SECRET': os.getenv('CLOUDINARY_API_SECRET', ''),
-    'SECURE': True,
-    'MEDIA_TAG': 'obragastos',
-    'INVALID_VIDEO_ERROR_MESSAGE': 'Error de video',
-    'EXCLUDED_MEDIA_LIBRARY_DIRS': [],
-    'MAGIC_FILE_PATH': 'magic',
-    'PREFIX': '',
-    'STATIC_TAG': 'staticfiles',
-    'STATICFILES_MANIFEST_ROOT': '',
-    'UPLOAD_PREFIX': '',
-}
 
 load_dotenv()
 
@@ -51,7 +29,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',   
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -80,6 +58,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'core.wsgi.application'
 
+# ─── BASE DE DATOS ────────────────────────────────────────────────────────────
 DATABASES = {
     'default': dj_database_url.config(
         conn_max_age=600,
@@ -87,26 +66,47 @@ DATABASES = {
     )
 }
 
+# ─── ARCHIVOS ESTÁTICOS ───────────────────────────────────────────────────────
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-CLOUDINARY_URL = os.getenv('CLOUDINARY_URL', '')
-if CLOUDINARY_URL:
+# ─── CLOUDINARY ───────────────────────────────────────────────────────────────
+CLOUDINARY_CLOUD_NAME = os.getenv('CLOUDINARY_CLOUD_NAME', '')
+CLOUDINARY_API_KEY    = os.getenv('CLOUDINARY_API_KEY', '')
+CLOUDINARY_API_SECRET = os.getenv('CLOUDINARY_API_SECRET', '')
+
+if CLOUDINARY_CLOUD_NAME:
+    import cloudinary
+    cloudinary.config(
+        cloud_name=CLOUDINARY_CLOUD_NAME,
+        api_key=CLOUDINARY_API_KEY,
+        api_secret=CLOUDINARY_API_SECRET,
+        secure=True,
+    )
+    CLOUDINARY_STORAGE = {
+        'CLOUD_NAME': CLOUDINARY_CLOUD_NAME,
+        'API_KEY': CLOUDINARY_API_KEY,
+        'API_SECRET': CLOUDINARY_API_SECRET,
+        'SECURE': True,
+    }
     DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
     MEDIA_URL = '/media/'
 else:
     MEDIA_URL = '/media/'
     MEDIA_ROOT = BASE_DIR / 'media'
 
+# ─── TESSERACT ────────────────────────────────────────────────────────────────
 TESSERACT_CMD = os.getenv('TESSERACT_CMD', '/usr/bin/tesseract')
 
+# ─── INTERNACIONALIZACIÓN ─────────────────────────────────────────────────────
 LANGUAGE_CODE = 'es-cl'
 TIME_ZONE = 'America/Santiago'
 USE_I18N = True
 USE_L10N = True
 USE_TZ = True
 
+# ─── AUTH ─────────────────────────────────────────────────────────────────────
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/accounts/login/'
 LOGIN_URL = '/accounts/login/'
@@ -119,14 +119,15 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
 X_FRAME_OPTIONS = 'SAMEORIGIN'
 
+# ─── SHAREPOINT ───────────────────────────────────────────────────────────────
 MS_CLIENT_ID     = os.getenv('MS_CLIENT_ID')
 MS_TENANT_ID     = os.getenv('MS_TENANT_ID')
 MS_CLIENT_SECRET = os.getenv('MS_CLIENT_SECRET')
 MS_SITE_ID       = os.getenv('MS_SITE_ID')
 
+# ─── LOGGING ──────────────────────────────────────────────────────────────────
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -140,14 +141,8 @@ LOGGING = {
     'loggers': {
         'gastos': {
             'handlers': ['console'],
-            'level': 'DEBUG',
+            'level': 'INFO',
             'propagate': False,
         },
     },
 }
-
-import logging
-_log = logging.getLogger(__name__)
-_log.warning(f"CLOUDINARY_URL presente: {bool(CLOUDINARY_URL)} valor: {CLOUDINARY_URL[:20] if CLOUDINARY_URL else 'VACIO'}")
-
-_log.warning(f"DEFAULT_FILE_STORAGE: {DEFAULT_FILE_STORAGE}")
