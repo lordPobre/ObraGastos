@@ -1,179 +1,430 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Control de Gastos{% endblock %}</title>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <meta name="theme-color" content="#534AB7">
+    <title>{% block title %}ObraGastos · Control de Gastos de Construcción{% endblock %}</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
 
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6; /* Gris muy suave de fondo */
-            overflow-x: hidden;
-        }
-        /* SIDEBAR ESTILO 'GLASS' O DARK */
-        .sidebar {
-            height: 100vh;       /* 1. Ocupa exactamente el 100% de la altura de la ventana */
-            position: sticky;    /* 2. Se "pega" a la pantalla */
-            top: 0;              /* 3. Se pega desde el borde superior */
-            overflow-y: auto;    /* 4. Si el menú es muy alto, aparece scroll SOLO en el menú */
-            z-index: 1000;       /* 5. Asegura que esté por encima del contenido si algo se cruza */
-            
-            /* Tus estilos visuales anteriores */
-            background: #1e293b; 
-            color: white;
-            box-shadow: 4px 0 10px rgba(0,0,0,0.05);
+        :root {
+            --color-bg: #FAFAF9;
+            --color-surface: #FFFFFF;
+            --color-border: #E5E5E2;
+            --color-border-strong: #D3D1C7;
+            --color-text-primary: #2C2C2A;
+            --color-text-secondary: #5F5E5A;
+            --color-text-tertiary: #888780;
+            --color-primary: #534AB7;
+            --color-primary-light: #EEEDFE;
+            --color-primary-hover: #3C3489;
+            --color-success: #1D9E75;
+            --color-success-light: #E1F5EE;
+            --color-warning: #BA7517;
+            --color-warning-light: #FAEEDA;
+            --color-danger: #A32D2D;
+            --color-danger-light: #FCEBEB;
+            --color-info: #185FA5;
+            --color-info-light: #E6F1FB;
+            --radius-sm: 6px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+            --shadow-md: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.03);
+            --transition: all 0.18s ease;
         }
 
-        /* Ocultamos la barra de scroll fea del sidebar (Opcional, para Chrome/Safari) */
-        .sidebar::-webkit-scrollbar {
-            width: 6px;
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--color-bg);
+            color: var(--color-text-primary);
+            font-size: 14px;
+            line-height: 1.5;
         }
-        .sidebar::-webkit-scrollbar-thumb {
-            background-color: rgba(255,255,255,0.2);
-            border-radius: 4px;
+
+        /* === SIDEBAR === */
+        .sidebar {
+            min-height: 100vh;
+            position: sticky;
+            top: 0;
+            background: var(--color-surface);
+            border-right: 1px solid var(--color-border);
+            padding: 20px 14px;
+            display: flex;
+            flex-direction: column;
+            z-index: 100;
         }
-        .nav-link {
-            color: #94a3b8; /* Texto grisáceo */
-            padding: 12px 20px;
-            border-radius: 8px;
-            margin-bottom: 5px;
-            transition: all 0.2s;
-        }
-        .nav-link:hover, .nav-link.active {
-            background-color: #334155; /* Hover suave */
-            color: #fff;
-            transform: translateX(5px);
-        }
-        .nav-link i { margin-right: 10px; font-size: 1.1rem; }
-        
-        /* CARD MODERNA */
-        .card-modern {
-            border: none;
-            border-radius: 16px;
-            background: white;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-            transition: transform 0.2s;
-        }
-        
-        /* HEADER USUARIO */
-        .user-pill {
-            background: white;
-            padding: 8px 16px;
-            border-radius: 50px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+
+        .brand {
             display: flex;
             align-items: center;
             gap: 10px;
+            padding: 6px 8px 18px;
+            border-bottom: 1px solid var(--color-border);
+            margin-bottom: 14px;
         }
-        .empresa-badge {
-            background-color: #e0f2fe; /* Azul muy claro */
-            color: #0284c7; /* Azul intenso */
-            font-size: 0.75rem;
-            font-weight: 700;
-            padding: 4px 8px;
-            border-radius: 6px;
+
+        .brand-logo {
+            width: 32px; height: 32px;
+            border-radius: var(--radius-sm);
+            background: var(--color-primary);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+            letter-spacing: -0.5px;
+        }
+
+        .brand-name {
+            font-weight: 600;
+            font-size: 15px;
+            color: var(--color-text-primary);
+            letter-spacing: -0.2px;
+        }
+
+        .nav-section-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--color-text-tertiary);
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.6px;
+            padding: 12px 10px 6px;
+        }
+
+        .nav-link-modern {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 10px;
+            border-radius: var(--radius-md);
+            color: var(--color-text-secondary);
+            font-size: 13.5px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: var(--transition);
+            margin-bottom: 2px;
+        }
+        .nav-link-modern:hover {
+            background: var(--color-bg);
+            color: var(--color-text-primary);
+        }
+        .nav-link-modern.active {
+            background: var(--color-primary-light);
+            color: var(--color-primary-hover);
+            font-weight: 600;
+        }
+        .nav-link-modern i { font-size: 16px; width: 16px; text-align: center; }
+
+        .nav-link-cta {
+            background: var(--color-primary);
+            color: #fff !important;
+            margin-top: 8px;
+        }
+        .nav-link-cta:hover {
+            background: var(--color-primary-hover);
+            color: #fff !important;
+        }
+
+        .sidebar-footer {
+            margin-top: auto;
+            padding-top: 14px;
+            border-top: 1px solid var(--color-border);
+        }
+
+        .user-block {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px;
+            border-radius: var(--radius-md);
+            margin-bottom: 8px;
+        }
+        .user-avatar {
+            width: 32px; height: 32px;
+            border-radius: 50%;
+            background: var(--color-primary-light);
+            color: var(--color-primary-hover);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 12px;
+        }
+        .user-info { line-height: 1.3; min-width: 0; flex: 1; }
+        .user-name { font-weight: 600; font-size: 12.5px; color: var(--color-text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .user-empresa { font-size: 11px; color: var(--color-text-tertiary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        .btn-logout {
+            width: 100%;
+            padding: 8px 10px;
+            background: transparent;
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            color: var(--color-text-secondary);
+            font-size: 13px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .btn-logout:hover {
+            background: var(--color-danger-light);
+            color: var(--color-danger);
+            border-color: var(--color-danger-light);
+        }
+
+        /* === HEADER PRINCIPAL === */
+        .main-content {
+            padding: 24px 32px;
+            min-height: 100vh;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+        .page-title {
+            font-size: 22px;
+            font-weight: 600;
+            color: var(--color-text-primary);
+            margin: 0 0 2px;
+            letter-spacing: -0.4px;
+        }
+        .page-subtitle {
+            font-size: 13px;
+            color: var(--color-text-tertiary);
+            margin: 0;
+        }
+
+        /* === COMPONENTES BASE === */
+        .card-modern {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn-primary-modern {
+            background: var(--color-primary);
+            color: #fff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: var(--radius-md);
+            font-size: 13px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+        }
+        .btn-primary-modern:hover {
+            background: var(--color-primary-hover);
+            color: #fff;
+        }
+
+        .btn-secondary-modern {
+            background: var(--color-surface);
+            color: var(--color-text-primary);
+            border: 1px solid var(--color-border);
+            padding: 7px 14px;
+            border-radius: var(--radius-md);
+            font-size: 13px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+        }
+        .btn-secondary-modern:hover {
+            background: var(--color-bg);
+            border-color: var(--color-border-strong);
+            color: var(--color-text-primary);
+        }
+
+        .input-modern {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            background: var(--color-surface);
+            font-size: 13.5px;
+            font-family: inherit;
+            color: var(--color-text-primary);
+            transition: var(--transition);
+        }
+        .input-modern:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px rgba(83, 74, 183, 0.1);
+        }
+
+        /* === RESPONSIVE === */
+        .mobile-toggle {
+            display: none;
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            width: 40px; height: 40px;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 18px;
+        }
+
+        @media (max-width: 991px) {
+            .sidebar {
+                position: fixed;
+                left: -260px;
+                width: 260px;
+                transition: left 0.25s ease;
+                box-shadow: 0 0 30px rgba(0,0,0,0.08);
+            }
+            .sidebar.open { left: 0; }
+            .main-content { padding: 16px; }
+            .mobile-toggle { display: inline-flex; }
+            .sidebar-overlay {
+                display: none;
+                position: fixed;
+                inset: 0;
+                background: rgba(0,0,0,0.4);
+                z-index: 99;
+            }
+            .sidebar-overlay.active { display: block; }
+        }
+
+        /* === MENSAJES === */
+        .alert-modern {
+            border: 1px solid;
+            border-radius: var(--radius-md);
+            padding: 12px 14px;
+            font-size: 13.5px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        .alert-success-modern {
+            background: var(--color-success-light);
+            border-color: var(--color-success);
+            color: #085041;
+        }
+        .alert-warning-modern {
+            background: var(--color-warning-light);
+            border-color: var(--color-warning);
+            color: #633806;
+        }
+        .alert-danger-modern {
+            background: var(--color-danger-light);
+            border-color: var(--color-danger);
+            color: #791F1F;
         }
     </style>
+
+    {% block extra_head %}{% endblock %}
 </head>
 <body>
 
-<div class="container-fluid">
-    <div class="row flex-nowrap">
-        
-        <div class="col-auto col-md-3 col-xl-2 px-sm-2 px-0 sidebar">
-            <div class="d-flex flex-column align-items-center align-items-sm-start px-3 pt-4 text-white min-vh-100">
-                
-                <a href="/" class="d-flex align-items-center pb-3 mb-md-0 me-md-auto text-white text-decoration-none">
-                    <i class="bi bi-building-fill-gear fs-4 me-2 text-primary"></i>
-                    <span class="fs-5 fw-bold d-none d-sm-inline">Control de Gastos</span>
-                </a>
-                
-                <ul class="nav nav-pills flex-column mb-auto w-100 mt-4" id="menu">
-                    
-                    <li class="nav-item w-100">
-                        <a href="{% url 'dashboard' %}" class="nav-link align-middle px-0 {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
-                            <i class="bi bi-speedometer2"></i> <span class="ms-1 d-none d-sm-inline">Dashboard</span>
-                        </a>
-                    </li>
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
 
-                    <li class="nav-item w-100">
-                        <a href="{% url 'historial_gastos' %}" class="nav-link px-0 align-middle {% if request.resolver_match.url_name == 'historial_gastos' %}active{% endif %}">
-                            <i class="bi bi-clock-history"></i> <span class="ms-1 d-none d-sm-inline">Historial</span>
-                        </a>
-                    </li>
-                    <li class="nav-item w-100">
-                        <a href="{% url 'lista_obras' %}" class="nav-link px-0 align-middle">
-                            <i class="bi bi-buildings"></i> <span class="ms-1 d-none d-sm-inline">Proyectos</span>
-                        </a>
-                    </li>
-                    <li class="nav-item w-100 mt-2">
-                        <a href="{% url 'crear_gasto' %}" class="nav-link px-0 align-middle">
-                            <i class="bi bi-plus-circle-fill text-success fs-5"></i> 
-                            <span class="ms-1 d-none d-sm-inline fw-bold text-white">Nuevo Gasto</span>
-                        </a>
-                    </li>
-                </ul>
-                
-                <hr class="w-100 border-secondary">
-                
-                <div class="pb-4 w-100">
-                    <form action="{% url 'logout' %}" method="post">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-outline-danger w-100 border-0 text-start ps-0 nav-link">
-                            <i class="bi bi-box-arrow-right text-danger"></i> 
-                            <span class="ms-1 d-none d-sm-inline text-danger">Cerrar Sesión</span>
-                        </button>
-                    </form>
-                </div>
-
-            </div>
+<div class="row g-0 flex-nowrap">
+    <!-- SIDEBAR -->
+    <aside class="col-auto sidebar" id="sidebar" style="width: 232px;">
+        <div class="brand">
+            <div class="brand-logo">OG</div>
+            <div class="brand-name">ObraGastos</div>
         </div>
 
-        <div class="col py-3 px-4">
-            
-            <div class="d-flex justify-content-between align-items-center mb-4 mt-2">
-                <div>
-                    <h4 class="fw-bold mb-0 text-dark">{% block header_title %}Panel de Control{% endblock %}</h4>
-                    <p class="text-muted small mb-0">{% now "l d \d\e F, Y" %}</p>
-                </div>
+        <nav class="nav-section-label">Principal</nav>
 
-                <div class="user-pill">
-                    <div class="d-flex flex-column text-end lh-1">
-                        <span class="fw-bold text-dark small">{{ user.first_name|default:user.username|title }}</span>
-                        {% if user.perfil.empresa %}
-                            <span class="text-muted" style="font-size: 10px;">{{ user.perfil.empresa.nombre }}</span>
-                        {% else %}
-                            <span class="text-muted" style="font-size: 10px;">Sin Empresa</span>
-                        {% endif %}
+        <a href="{% url 'dashboard' %}" class="nav-link-modern {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+            <i class="bi bi-grid-1x2"></i> Resumen
+        </a>
+        <a href="{% url 'historial_gastos' %}" class="nav-link-modern {% if request.resolver_match.url_name == 'historial_gastos' %}active{% endif %}">
+            <i class="bi bi-receipt"></i> Boletas
+        </a>
+        <a href="{% url 'lista_obras' %}" class="nav-link-modern {% if 'obra' in request.resolver_match.url_name %}active{% endif %}">
+            <i class="bi bi-buildings"></i> Proyectos
+        </a>
+
+        <div class="nav-section-label">Acciones</div>
+
+        <a href="{% url 'crear_gasto' %}" class="nav-link-modern nav-link-cta {% if request.resolver_match.url_name == 'crear_gasto' %}active{% endif %}">
+            <i class="bi bi-plus-lg"></i> Escanear boleta
+        </a>
+        <a href="{% url 'carga_masiva' %}" class="nav-link-modern {% if request.resolver_match.url_name == 'carga_masiva' %}active{% endif %}">
+            <i class="bi bi-cloud-upload"></i> Carga masiva
+        </a>
+
+        <div class="sidebar-footer">
+            <div class="user-block">
+                <div class="user-avatar">{{ user.first_name|default:user.username|first|upper }}</div>
+                <div class="user-info">
+                    <div class="user-name">{{ user.first_name|default:user.username|title }}</div>
+                    <div class="user-empresa">
+                        {% if user.perfil.empresa %}{{ user.perfil.empresa.nombre }}{% else %}Sin empresa{% endif %}
                     </div>
-                    
-                    {% if user.perfil.empresa %}
-                        <div class="empresa-badge">
-                            {{ user.perfil.empresa.nombre|slice:":3" }} </div>
-                    {% else %}
-                        <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 35px; height: 35px;">
-                            <i class="bi bi-person-fill"></i>
-                        </div>
-                    {% endif %}
                 </div>
             </div>
-
-            {% block content %}
-            {% endblock %}
-            
+            <form action="{% url 'logout' %}" method="post" class="m-0">
+                {% csrf_token %}
+                <button type="submit" class="btn-logout">
+                    <i class="bi bi-box-arrow-right"></i> Cerrar sesión
+                </button>
+            </form>
         </div>
-    </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="col main-content">
+        <div class="d-lg-none mb-3">
+            <button class="mobile-toggle" onclick="toggleSidebar()" aria-label="Abrir menú">
+                <i class="bi bi-list"></i>
+            </button>
+        </div>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert-modern alert-{{ message.tags|default:'info' }}-modern" role="alert">
+                    {% if message.tags == 'success' %}<i class="bi bi-check-circle-fill"></i>
+                    {% elif message.tags == 'warning' %}<i class="bi bi-exclamation-triangle-fill"></i>
+                    {% else %}<i class="bi bi-info-circle-fill"></i>{% endif %}
+                    <div>{{ message }}</div>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </main>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    function toggleSidebar() {
+        const sb = document.getElementById('sidebar');
+        const ov = document.getElementById('sidebarOverlay');
+        sb.classList.toggle('open');
+        ov.classList.toggle('active');
+    }
+</script>
 {% block scripts %}{% endblock %}
 
 </body>

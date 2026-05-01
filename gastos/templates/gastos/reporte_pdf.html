@@ -1,53 +1,139 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
     <style>
-        body { font-family: Helvetica, Arial, sans-serif; font-size: 12px; }
-        h1 { color: #333; text-align: center; }
-        .resumen { margin-bottom: 20px; border-bottom: 1px solid #ccc; padding-bottom: 10px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th { background-color: #f2f2f2; border-bottom: 2px solid #333; padding: 8px; text-align: left; }
-        td { border-bottom: 1px solid #ddd; padding: 8px; }
-        .total { font-weight: bold; background-color: #e8f5e9; }
-        .monto { text-align: right; }
+        @page {
+            size: A4;
+            margin: 1.5cm;
+        }
+        body {
+            font-family: Helvetica, Arial, sans-serif;
+            font-size: 11px;
+            color: #2C2C2A;
+            line-height: 1.5;
+        }
+        .header {
+            border-bottom: 2px solid #534AB7;
+            padding-bottom: 12px;
+            margin-bottom: 16px;
+        }
+        .brand {
+            font-size: 18px;
+            font-weight: bold;
+            color: #534AB7;
+            margin: 0 0 4px;
+        }
+        h1 {
+            font-size: 16px;
+            margin: 12px 0 4px;
+            color: #2C2C2A;
+        }
+        .meta {
+            font-size: 10px;
+            color: #5F5E5A;
+            margin: 4px 0 0;
+        }
+        .meta strong { color: #2C2C2A; }
+
+        .info-box {
+            background-color: #FAFAF9;
+            padding: 10px 14px;
+            margin: 12px 0 18px;
+            border: 1px solid #E5E5E2;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+        }
+        th {
+            background-color: #534AB7;
+            color: #ffffff;
+            padding: 8px 10px;
+            text-align: left;
+            font-weight: bold;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+        td {
+            border-bottom: 1px solid #E5E5E2;
+            padding: 7px 10px;
+            font-size: 10.5px;
+        }
+        tr:nth-child(even) td { background-color: #FAFAF9; }
+
+        .monto { text-align: right; font-weight: bold; }
+        .total-row {
+            background-color: #EEEDFE;
+            font-weight: bold;
+            font-size: 11.5px;
+        }
+        .total-row td { border-top: 2px solid #534AB7; padding: 10px; }
+
+        .footer {
+            margin-top: 24px;
+            padding-top: 8px;
+            border-top: 1px solid #E5E5E2;
+            font-size: 9px;
+            color: #888780;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
-    <h1>Reporte de Gastos</h1>
-    
-    <div class="resumen">
-        <strong>Generado por:</strong> Sistema ObraGastos<br>
-        <strong>Fecha reporte:</strong> {% now "d/m/Y H:i" %}<br>
-        {% if fecha_inicio and fecha_fin %}
-            <strong>Periodo:</strong> Desde {{ fecha_inicio }} hasta {{ fecha_fin }}
-        {% else %}
-            <strong>Periodo:</strong> Todo el historial
-        {% endif %}
-    </div>
 
-    <table>
-        <thead>
-            <tr>
-                <th>Fecha</th>
-                <th>RUT Emisor</th>
-                <th>Folio</th>
-                <th class="monto">Monto</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for gasto in gastos %}
-            <tr>
-                <td>{{ gasto.fecha_emision|date:"d/m/Y" }}</td>
-                <td>{{ gasto.rut_emisor }}</td>
-                <td>{{ gasto.folio|default:"--" }}</td>
-                <td class="monto">${{ gasto.monto_total }}</td>
-            </tr>
-            {% endfor %}
-            <tr class="total">
-                <td colspan="3" style="text-align: right;">TOTAL GENERAL:</td>
-                <td class="monto">${{ total }}</td>
-            </tr>
-        </tbody>
-    </table>
+<div class="header">
+    <p class="brand">ObraGastos</p>
+    <h1>Reporte de Gastos</h1>
+    <p class="meta"><strong>Empresa:</strong> {{ empresa }}</p>
+    <p class="meta"><strong>Generado el:</strong> {% now "d/m/Y H:i" %}</p>
+</div>
+
+<div class="info-box">
+    {% if fecha_inicio and fecha_fin %}
+        <strong>Período:</strong> Desde {{ fecha_inicio }} hasta {{ fecha_fin }}
+    {% else %}
+        <strong>Período:</strong> Todo el historial
+    {% endif %}
+    <br>
+    <strong>Cantidad de registros:</strong> {{ gastos|length }}
+</div>
+
+<table>
+    <thead>
+        <tr>
+            <th>Fecha</th>
+            <th>RUT Emisor</th>
+            <th>Folio</th>
+            <th>Categoría</th>
+            <th>Proyecto</th>
+            <th class="monto">Monto</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for gasto in gastos %}
+        <tr>
+            <td>{{ gasto.fecha_emision|date:"d/m/Y"|default:"--" }}</td>
+            <td>{{ gasto.rut_emisor|default:"--" }}</td>
+            <td>{{ gasto.folio|default:"--" }}</td>
+            <td>{{ gasto.get_categoria_display|default:"--" }}</td>
+            <td>{{ gasto.obra.nombre|default:"--" }}</td>
+            <td class="monto">${{ gasto.monto_total|stringformat:"d" }}</td>
+        </tr>
+        {% endfor %}
+        <tr class="total-row">
+            <td colspan="5" style="text-align: right;">TOTAL GENERAL</td>
+            <td class="monto">${{ total }}</td>
+        </tr>
+    </tbody>
+</table>
+
+<div class="footer">
+    Reporte generado automáticamente por ObraGastos · {% now "Y" %}
+</div>
+
 </body>
 </html>

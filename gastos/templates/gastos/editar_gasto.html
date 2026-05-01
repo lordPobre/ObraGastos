@@ -1,115 +1,429 @@
 {% extends 'base.html' %}
+{% load humanize %}
 
-{% block content %}
-<div class="row">
-    
-    <div class="col-lg-6 mb-4">
-        <div class="card shadow-sm h-100 border-0" style="position: sticky; top: 20px;">
-            <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
-                <h5 class="mb-0"><i class="bi bi-image"></i> Evidencia</h5>
-                {% if form.instance.imagen %}
-                    <a href="{{ form.instance.imagen.url }}" target="_blank" class="btn btn-sm btn-outline-light">
-                        <i class="bi bi-arrows-fullscreen"></i> Ver Completa
-                    </a>
-                {% endif %}
-            </div>
-            
-            <div class="card-body bg-light text-center d-flex align-items-center justify-content-center p-0" style="min-height: 500px;">
-                {% if form.instance.imagen %}
-                    
-                    {% if form.instance.imagen.url|lower|slice:"-4:" == ".pdf" %}
-                        <iframe src="{{ form.instance.imagen.url }}" width="100%" height="600px" style="border: none;">
-                            Tu navegador no soporta PDFs. <a href="{{ form.instance.imagen.url }}">Descárgalo aquí</a>
-                        </iframe>
-                    {% else %}
-                        <img src="{{ form.instance.imagen.url }}" class="img-fluid" style="max-height: 80vh; object-fit: contain;">
-                    {% endif %}
+{% block title %}{{ titulo }} · ObraGastos{% endblock %}
 
-                {% else %}
-                    <div class="text-muted py-5">
-                        <i class="bi bi-file-x display-1"></i><p>No hay imagen adjunta</p>
-                    </div>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-
-    <div class="col-lg-6">
-        <div class="card shadow-sm border-0">
-            <div class="card-header bg-white border-bottom-0 pt-4">
-                <h4 class="text-primary fw-bold mb-0">
-                    <i class="bi bi-pencil-square me-2"></i>Verificar Gasto
-                </h4>
-            </div>
-
-            <div class="card-body">
-                {% if messages %}
-                    {% for message in messages %}
-                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
-                            {{ message }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        </div>
-                    {% endfor %}
-                {% endif %}
-
-                <form method="post" enctype="multipart/form-data">
-                    {% csrf_token %}
-                    <div class="row g-3">
-                        
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold text-secondary">Fecha Emisión</label>
-                            {{ form.fecha_emision }}
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold text-secondary">Folio / N°</label>
-                            {{ form.folio }}
-                        </div>
-
-                        <div class="col-12">
-                            <label class="form-label fw-bold text-secondary">RUT Emisor / Proveedor</label>
-                            {{ form.rut_emisor }}
-                        </div>
-
-                        <div class="col-12">
-                            <label class="form-label fw-bold text-success">Monto Total</label>
-                            <div class="input-group input-group-lg">
-                                <span class="input-group-text bg-success text-white border-success">$</span>
-                                {{ form.monto_total }}
-                            </div>
-                        </div>
-
-                        {% for field in form %}
-                            {% if field.name not in "fecha_emision folio rut_emisor monto_total imagen imagen_boleta" %}
-                                <div class="col-12 mt-2">
-                                    <label class="form-label fw-bold text-secondary">{{ field.label }}</label>
-                                    {{ field }}
-                                </div>
-                            {% endif %}
-                        {% endfor %}
-
-                    </div>
-
-                    <hr class="my-4">
-
-                    <div class="d-flex justify-content-between align-items-center">
-                        <a href="{% url 'eliminar_gasto' form.instance.pk %}" class="text-danger text-decoration-none small">
-                            <i class="bi bi-trash"></i> Eliminar
-                        </a>
-                        <div class="d-flex gap-2">
-                            <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">Cancelar</a>
-                            <button type="submit" class="btn btn-primary px-4">Guardar</button>
-                        </div>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
+{% block extra_head %}
 <style>
-    /* Estilo para inputs de monto si tienen ID correcto */
-    input[name="monto_total"] { 
-        font-size: 1.25rem; font-weight: bold; color: #198754; border-color: #198754; 
+    .edit-layout {
+        display: grid;
+        grid-template-columns: 1fr 1.1fr;
+        gap: 20px;
+        align-items: start;
+    }
+    @media (max-width: 900px) {
+        .edit-layout { grid-template-columns: 1fr; }
+    }
+
+    .panel {
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-lg);
+        padding: 22px;
+    }
+
+    .panel-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 18px;
+        padding-bottom: 14px;
+        border-bottom: 1px solid var(--color-border);
+    }
+    .panel-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--color-text-primary);
+        margin: 0;
+    }
+
+    .preview-container {
+        position: sticky;
+        top: 20px;
+    }
+
+    .preview-image {
+        width: 100%;
+        max-height: 560px;
+        object-fit: contain;
+        border-radius: var(--radius-md);
+        background: var(--color-bg);
+        border: 1px solid var(--color-border);
+    }
+
+    .preview-pdf {
+        width: 100%;
+        height: 560px;
+        border-radius: var(--radius-md);
+        border: 1px solid var(--color-border);
+    }
+
+    .preview-empty {
+        height: 320px;
+        background: var(--color-bg);
+        border: 2px dashed var(--color-border);
+        border-radius: var(--radius-md);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        color: var(--color-text-secondary);
+    }
+
+    .form-group { margin-bottom: 16px; }
+    .form-label {
+        display: block;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        font-weight: 600;
+        color: var(--color-text-secondary);
+        margin-bottom: 6px;
+    }
+
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 600px) { .form-row { grid-template-columns: 1fr; } }
+
+    .input-modern, select.input-modern, textarea.input-modern {
+        width: 100%;
+        padding: 9px 12px;
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+        background: var(--color-surface);
+        font-size: 13.5px;
+        font-family: inherit;
+        color: var(--color-text-primary);
+        transition: all 0.18s ease;
+    }
+    .input-modern:focus {
+        outline: none;
+        border-color: var(--color-primary);
+        box-shadow: 0 0 0 3px rgba(83, 74, 183, 0.1);
+    }
+    textarea.input-modern { min-height: 70px; resize: vertical; }
+
+    .input-detected-label {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 10px;
+        color: var(--color-primary);
+        margin-left: 6px;
+        font-weight: 600;
+        text-transform: none;
+        letter-spacing: 0;
+    }
+
+    .status-card {
+        padding: 14px 16px;
+        border-radius: var(--radius-md);
+        margin-bottom: 18px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .status-success {
+        background: #E8F7F1;
+        border: 1px solid #B8E5D2;
+        color: #0D5C44;
+    }
+    .status-warning {
+        background: #FBF1E0;
+        border: 1px solid #F0D9A8;
+        color: #784A0E;
+    }
+    .status-card i { font-size: 22px; }
+    .status-text { font-size: 13px; line-height: 1.4; }
+    .status-title { font-weight: 600; margin-bottom: 2px; }
+
+    .actions-row {
+        display: flex;
+        gap: 10px;
+        margin-top: 22px;
+        padding-top: 18px;
+        border-top: 1px solid var(--color-border);
+    }
+    @media (max-width: 600px) {
+        .actions-row { flex-direction: column-reverse; }
+    }
+
+    .btn-modern {
+        padding: 10px 18px;
+        border-radius: var(--radius-md);
+        font-size: 13px;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        transition: all 0.18s ease;
+        text-decoration: none;
+        font-family: inherit;
+    }
+    .btn-primary-modern {
+        background: var(--color-primary);
+        color: white;
+        flex: 1;
+    }
+    .btn-primary-modern:hover {
+        background: var(--color-primary-hover);
+        transform: translateY(-1px);
+    }
+    .btn-secondary-modern {
+        background: var(--color-surface);
+        color: var(--color-text-primary);
+        border: 1px solid var(--color-border);
+    }
+    .btn-secondary-modern:hover { background: var(--color-bg); }
+    .btn-danger-modern {
+        background: var(--color-surface);
+        color: var(--color-danger);
+        border: 1px solid var(--color-danger);
+    }
+    .btn-danger-modern:hover { background: #FCE9E9; }
+
+    .quick-info {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 14px;
+    }
+    .info-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 10px;
+        background: var(--color-bg);
+        border-radius: 6px;
+        font-size: 11.5px;
+        color: var(--color-text-secondary);
+    }
+    .info-chip strong { color: var(--color-text-primary); font-weight: 600; }
+
+    .download-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        color: var(--color-primary);
+        text-decoration: none;
+        font-weight: 500;
+    }
+    .download-link:hover { text-decoration: underline; }
+
+    .errorlist {
+        list-style: none;
+        padding: 0;
+        margin: 4px 0 0;
+        color: var(--color-danger);
+        font-size: 12px;
     }
 </style>
+{% endblock %}
+
+{% block header_title %}Editar gasto{% endblock %}
+
+{% block content %}
+<div class="edit-layout">
+
+    <div class="preview-container">
+        <div class="panel">
+            <div class="panel-header">
+                <h3 class="panel-title">
+                    <i class="bi bi-receipt" style="color: var(--color-primary); margin-right: 6px;"></i>
+                    Boleta original
+                </h3>
+                {% if gasto.imagen %}
+                <a href="{% url 'descargar_pdf' gasto.pk %}" class="download-link">
+                    <i class="bi bi-download"></i> Descargar
+                </a>
+                {% endif %}
+            </div>
+
+            <div class="quick-info">
+                <span class="info-chip">
+                    <i class="bi bi-hash"></i> ID <strong>#{{ gasto.id }}</strong>
+                </span>
+                {% if gasto.fecha_subida %}
+                <span class="info-chip">
+                    <i class="bi bi-calendar-check"></i> Subido <strong>{{ gasto.fecha_subida|date:"d M Y H:i" }}</strong>
+                </span>
+                {% endif %}
+                {% if gasto.usuario %}
+                <span class="info-chip">
+                    <i class="bi bi-person"></i> <strong>{{ gasto.usuario.username }}</strong>
+                </span>
+                {% endif %}
+            </div>
+
+            {% if gasto.imagen %}
+                {% with img_url=gasto.imagen.url %}
+                {% if '.pdf' in img_url|lower %}
+                    <iframe src="{{ img_url }}" class="preview-pdf" title="Boleta PDF"></iframe>
+                {% else %}
+                    <img src="{{ img_url }}"
+                         alt="Boleta cargada"
+                         class="preview-image"
+                         loading="lazy">
+                {% endif %}
+                {% endwith %}
+            {% else %}
+                <div class="preview-empty">
+                    <i class="bi bi-image" style="font-size: 36px;"></i>
+                    <span style="font-size: 13px;">Sin imagen adjunta</span>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div>
+        <div class="panel">
+            <div class="panel-header">
+                <h3 class="panel-title">
+                    <i class="bi bi-pencil-square" style="color: var(--color-primary); margin-right: 6px;"></i>
+                    Datos del gasto
+                </h3>
+            </div>
+
+            {% if gasto.procesado_exitosamente %}
+                <div class="status-card status-success">
+                    <i class="bi bi-check-circle-fill"></i>
+                    <div class="status-text">
+                        <div class="status-title">Boleta procesada automáticamente</div>
+                        <div>Verifica los datos detectados antes de guardar.</div>
+                    </div>
+                </div>
+            {% elif gasto.nota_error %}
+                <div class="status-card status-warning">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    <div class="status-text">
+                        <div class="status-title">No se pudo leer automáticamente</div>
+                        <div>Completa los campos manualmente.</div>
+                    </div>
+                </div>
+            {% endif %}
+
+            <form method="post" enctype="multipart/form-data" novalidate>
+                {% csrf_token %}
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="{{ form.fecha_emision.id_for_label }}" class="form-label">
+                            Fecha emisión
+                            {% if gasto.fecha_emision and gasto.procesado_exitosamente %}
+                                <span class="input-detected-label"><i class="bi bi-magic"></i> Detectado</span>
+                            {% endif %}
+                        </label>
+                        {{ form.fecha_emision }}
+                        {{ form.fecha_emision.errors }}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.monto_total.id_for_label }}" class="form-label">
+                            Monto total (CLP)
+                            {% if gasto.monto_total and gasto.procesado_exitosamente %}
+                                <span class="input-detected-label"><i class="bi bi-magic"></i> Detectado</span>
+                            {% endif %}
+                        </label>
+                        {{ form.monto_total }}
+                        {{ form.monto_total.errors }}
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="{{ form.rut_emisor.id_for_label }}" class="form-label">
+                            RUT proveedor
+                            {% if gasto.rut_emisor and gasto.procesado_exitosamente %}
+                                <span class="input-detected-label"><i class="bi bi-magic"></i> Detectado</span>
+                            {% endif %}
+                        </label>
+                        {{ form.rut_emisor }}
+                        {{ form.rut_emisor.errors }}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.folio.id_for_label }}" class="form-label">
+                            Folio / N° doc
+                            {% if gasto.folio and gasto.procesado_exitosamente %}
+                                <span class="input-detected-label"><i class="bi bi-magic"></i> Detectado</span>
+                            {% endif %}
+                        </label>
+                        {{ form.folio }}
+                        {{ form.folio.errors }}
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="{{ form.categoria.id_for_label }}" class="form-label">Categoría</label>
+                        {{ form.categoria }}
+                        {{ form.categoria.errors }}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.obra.id_for_label }}" class="form-label">Proyecto</label>
+                        {{ form.obra }}
+                        {{ form.obra.errors }}
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.descripcion.id_for_label }}" class="form-label">
+                        Descripción / Detalle
+                    </label>
+                    {{ form.descripcion }}
+                    {{ form.descripcion.errors }}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.imagen.id_for_label }}" class="form-label">
+                        Reemplazar archivo (opcional)
+                    </label>
+                    {{ form.imagen }}
+                    {{ form.imagen.errors }}
+                    <div style="font-size: 11px; color: var(--color-text-secondary); margin-top: 4px;">
+                        Si subes un nuevo archivo, se volverá a procesar el OCR.
+                    </div>
+                </div>
+
+                <div class="actions-row">
+                    <a href="{% url 'eliminar_gasto' gasto.pk %}"
+                       class="btn-modern btn-danger-modern"
+                       title="Eliminar gasto">
+                        <i class="bi bi-trash"></i>
+                    </a>
+                    <a href="{% url 'historial_gastos' %}"
+                       class="btn-modern btn-secondary-modern">
+                        Cancelar
+                    </a>
+                    <button type="submit" class="btn-modern btn-primary-modern">
+                        <i class="bi bi-check-lg"></i> Guardar cambios
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Aplicar clase moderna a todos los inputs del form
+    document.querySelectorAll('form input, form select, form textarea').forEach(el => {
+        if (el.type !== 'hidden' && el.type !== 'file' && el.type !== 'submit') {
+            el.classList.add('input-modern');
+        }
+    });
+    // Estilo especial para input file
+    const fileInput = document.querySelector('input[type="file"]');
+    if (fileInput) {
+        fileInput.style.fontSize = '13px';
+        fileInput.style.padding = '6px';
+    }
+</script>
 {% endblock %}

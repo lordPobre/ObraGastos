@@ -1,15 +1,31 @@
-# Entornos virtuales y caché
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# Entorno virtual
 venv/
 env/
-__pycache__/
-*.pyc
-
-# Base de datos local
-db.sqlite3
-
-# Variables de entorno (¡Tus llaves de Microsoft!)
 .env
 
-# Archivos subidos por los usuarios
+# Django
+*.log
+local_settings.py
+db.sqlite3
+staticfiles/
 media/
-media/boletas/
+
+# VS Code
+.vscode/
+
+# Windows
+Thumbs.db
+desktop.ini
+
+# macOS
+.DS_Store
+
+# Railway / Deploy
+*.zip

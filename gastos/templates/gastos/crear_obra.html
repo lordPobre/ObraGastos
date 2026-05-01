@@ -1,106 +1,128 @@
 {% extends 'base.html' %}
 
-{% block header_title %}Nuevo Proyecto{% endblock %}
+{% block title %}Nuevo proyecto · ObraGastos{% endblock %}
+
+{% block extra_head %}
+<style>
+    .form-container { max-width: 560px; margin: 0 auto; }
+
+    .panel {
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-lg);
+        padding: 24px;
+    }
+
+    .form-group { margin-bottom: 18px; }
+    .form-label {
+        display: block;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        font-weight: 600;
+        color: var(--color-text-secondary);
+        margin-bottom: 6px;
+    }
+
+    .input-modern {
+        width: 100%;
+        padding: 9px 12px;
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+        background: var(--color-surface);
+        font-size: 13.5px;
+        font-family: inherit;
+        color: var(--color-text-primary);
+        transition: all 0.18s ease;
+    }
+    .input-modern:focus {
+        outline: none;
+        border-color: var(--color-primary);
+        box-shadow: 0 0 0 3px rgba(83, 74, 183, 0.1);
+    }
+
+    .switch-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 14px;
+        background: var(--color-bg);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+    }
+    .switch-info { display: flex; flex-direction: column; }
+    .switch-label { font-weight: 600; font-size: 13.5px; color: var(--color-text-primary); }
+    .switch-help { font-size: 12px; color: var(--color-text-tertiary); }
+
+    .field-error { font-size: 12px; color: var(--color-danger); margin-top: 4px; }
+
+    .actions-row {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+        margin-top: 8px;
+    }
+    .btn-large { padding: 10px 20px; font-size: 14px; }
+</style>
+{% endblock %}
 
 {% block content %}
+<div class="form-container">
 
-<div class="container-fluid p-0">
-    
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div style="margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
         <div>
-            <h5 class="fw-bold text-dark mb-1">Registrar Obra</h5>
-            <p class="text-muted small mb-0">Crea un nuevo centro de costos para tus gastos.</p>
+            <h1 class="page-title">Nuevo proyecto</h1>
+            <p class="page-subtitle">Crea un centro de costos para tus gastos</p>
         </div>
-        <a href="{% url 'lista_obras' %}" class="btn btn-light border shadow-sm text-muted">
-            <i class="bi bi-arrow-left me-2"></i>Volver al listado
+        <a href="{% url 'lista_obras' %}" class="btn-secondary-modern">
+            <i class="bi bi-arrow-left"></i> Volver
         </a>
     </div>
 
-    <div class="row justify-content-center">
-        <div class="col-12 col-md-8 col-lg-6">
-            <div class="card-modern p-4 p-md-5">
-                
-                <form method="post">
-                    {% csrf_token %}
+    <form method="post" novalidate>
+        {% csrf_token %}
 
-                    <div class="mb-4">
-                        <label for="{{ form.nombre.id_for_label }}" class="form-label fw-bold text-secondary small text-uppercase">
-                            Nombre del Proyecto
-                        </label>
-                        {{ form.nombre }}
-                        {% if form.nombre.errors %}
-                            <div class="text-danger small mt-1">{{ form.nombre.errors.0 }}</div>
-                        {% endif %}
+        <div class="panel">
+            <div class="form-group">
+                <label class="form-label" for="{{ form.nombre.id_for_label }}">Nombre del proyecto</label>
+                {{ form.nombre }}
+                {% if form.nombre.errors %}<div class="field-error">{{ form.nombre.errors.0 }}</div>{% endif %}
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="{{ form.ubicacion.id_for_label }}">Ubicación / dirección</label>
+                {{ form.ubicacion }}
+                {% if form.ubicacion.errors %}<div class="field-error">{{ form.ubicacion.errors.0 }}</div>{% endif %}
+            </div>
+
+            <div class="form-group">
+                <div class="switch-row">
+                    <div class="switch-info">
+                        <span class="switch-label">Proyecto activo</span>
+                        <span class="switch-help">Los proyectos activos aparecen en los reportes</span>
                     </div>
+                    <div>{{ form.activo }}</div>
+                </div>
+            </div>
 
-                    <div class="mb-4">
-                        <label for="{{ form.ubicacion.id_for_label }}" class="form-label fw-bold text-secondary small text-uppercase">
-                            Ubicación / Dirección
-                        </label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-light border-end-0"><i class="bi bi-geo-alt text-muted"></i></span>
-                            {{ form.ubicacion }}
-                        </div>
-                        {% if form.ubicacion.errors %}
-                            <div class="text-danger small mt-1">{{ form.ubicacion.errors.0 }}</div>
-                        {% endif %}
-                    </div>
-
-                    <div class="mb-4">
-                        <div class="form-check form-switch p-0 d-flex align-items-center bg-light rounded p-3 border">
-                            <div class="ms-5"> {{ form.activo }}
-                            </div>
-                            <label class="form-check-label ms-3 fw-bold text-dark cursor-pointer" for="{{ form.activo.id_for_label }}">
-                                Proyecto Activo
-                            </label>
-                            <small class="text-muted ms-auto pe-2">
-                                (Visible en reportes)
-                            </small>
-                        </div>
-                    </div>
-
-                    <div class="d-grid gap-2 mt-5">
-                        <button type="submit" class="btn btn-primary btn-lg shadow-sm fw-bold">
-                            <i class="bi bi-save me-2"></i> Guardar Proyecto
-                        </button>
-                        <a href="{% url 'lista_obras' %}" class="btn btn-light text-muted border-0">
-                            Cancelar
-                        </a>
-                    </div>
-
-                </form>
+            <div class="actions-row">
+                <a href="{% url 'lista_obras' %}" class="btn-secondary-modern btn-large">Cancelar</a>
+                <button type="submit" class="btn-primary-modern btn-large">
+                    <i class="bi bi-check2"></i> Guardar proyecto
+                </button>
             </div>
         </div>
-    </div>
+    </form>
 </div>
 
-<style>
-    /* Ajustes específicos para que los inputs se vean modernos */
-    .form-control {
-        padding: 12px 15px;
-        border-radius: 8px;
-        border: 1px solid #e2e8f0;
-        background-color: #f8fafc;
-    }
-    .form-control:focus {
-        background-color: #fff;
-        border-color: #4e73df;
-        box-shadow: 0 0 0 4px rgba(78, 115, 223, 0.1);
-    }
-    .input-group-text {
-        border-radius: 8px 0 0 8px;
-        border: 1px solid #e2e8f0;
-    }
-    /* El input pegado al icono */
-    .input-group .form-control {
-        border-radius: 0 8px 8px 0;
-        border-left: 0;
-    }
-    .form-switch .form-check-input {
-        width: 3em; 
-        height: 1.5em;
-        cursor: pointer;
-    }
-</style>
-
+<script>
+document.querySelectorAll('input[type="text"]').forEach(el => {
+    if (!el.classList.contains('input-modern')) el.classList.add('input-modern');
+});
+document.querySelectorAll('input[type="checkbox"]').forEach(el => {
+    el.style.width = '40px';
+    el.style.height = '22px';
+    el.style.cursor = 'pointer';
+});
+</script>
 {% endblock %}

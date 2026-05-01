@@ -1,193 +1,214 @@
 {% extends 'base.html' %}
 
-{% block content %}
+{% block title %}{{ titulo }} · ObraGastos{% endblock %}
+
+{% block extra_head %}
 <style>
-    :root {
-        --bg-body: #f8fafc;
-        --card-bg: #ffffff;
-        --shadow-soft: 0 10px 40px -10px rgba(0,0,0,0.08);
-        --radius-lg: 20px;
-        --radius-md: 12px;
-    }
+    .form-container { max-width: 720px; margin: 0 auto; }
 
-    body {
-        background-color: var(--bg-body);
-        font-family: 'Inter', -apple-system, sans-serif;
-    }
-
-    .card-neo {
-        background: var(--card-bg);
-        border: none;
+    .panel {
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
         border-radius: var(--radius-lg);
-        box-shadow: var(--shadow-soft);
-        overflow: hidden;
+        padding: 24px;
+        margin-bottom: 16px;
     }
 
-    /* Sobreescribimos los inputs de Django */
-    .form-control, .form-select {
-        border: 1px solid #e2e8f0;
+    .form-group { margin-bottom: 18px; }
+    .form-label {
+        display: block;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        font-weight: 600;
+        color: var(--color-text-secondary);
+        margin-bottom: 6px;
+    }
+
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 600px) { .form-row { grid-template-columns: 1fr; } }
+
+    .input-modern, select.input-modern, textarea.input-modern {
+        width: 100%;
+        padding: 9px 12px;
+        border: 1px solid var(--color-border);
         border-radius: var(--radius-md);
-        padding: 0.75rem 1rem;
-        background-color: #f8fafc;
-        transition: all 0.2s ease;
-        font-weight: 500;
-        color: #334155;
+        background: var(--color-surface);
+        font-size: 13.5px;
+        font-family: inherit;
+        color: var(--color-text-primary);
+        transition: all 0.18s ease;
     }
-
-    .form-control:focus, .form-select:focus {
-        background-color: #ffffff;
-        border-color: #6366f1;
-        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+    .input-modern:focus {
+        outline: none;
+        border-color: var(--color-primary);
+        box-shadow: 0 0 0 3px rgba(83, 74, 183, 0.1);
     }
+    textarea.input-modern { min-height: 80px; resize: vertical; }
 
-    /* Diseño de la Zona de Carga (Dropzone) */
-    .upload-zone {
-        border: 2px dashed #cbd5e1;
+    .dropzone {
+        border: 2px dashed var(--color-border-strong);
         border-radius: var(--radius-lg);
-        background-color: #f8fafc;
-        padding: 2rem 1rem;
+        padding: 32px 20px;
         text-align: center;
-        transition: all 0.2s ease;
+        background: var(--color-bg);
+        cursor: pointer;
+        transition: all 0.18s ease;
         position: relative;
     }
-
-    .upload-zone:hover, .upload-zone:focus-within {
-        border-color: #6366f1;
-        background-color: #eef2ff;
+    .dropzone:hover { border-color: var(--color-primary); background: var(--color-primary-light); }
+    .dropzone i { font-size: 32px; color: var(--color-primary); }
+    .dropzone-title { font-weight: 600; margin: 6px 0 2px; }
+    .dropzone-sub { font-size: 12.5px; color: var(--color-text-tertiary); }
+    .dropzone input[type="file"] {
+        position: absolute; inset: 0; opacity: 0; cursor: pointer;
     }
 
-    .upload-zone input[type="file"] {
-        padding: 10px;
-        background: transparent;
-        border: none;
-        width: 100%;
-        color: #475569;
-    }
-
-    /* Botones Modernos */
-    .btn-neo {
+    .preview-img {
+        max-width: 100%;
+        max-height: 240px;
         border-radius: var(--radius-md);
-        padding: 0.8rem 1.5rem;
-        font-weight: 600;
-        letter-spacing: 0.3px;
-        transition: all 0.2s;
+        margin-top: 12px;
+        border: 1px solid var(--color-border);
     }
 
-    .btn-neo-primary {
-        background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-        color: white;
-        border: none;
+    .actions-row {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+    }
+    .btn-large { padding: 10px 20px; font-size: 14px; }
+
+    .field-error {
+        font-size: 12px;
+        color: var(--color-danger);
+        margin-top: 4px;
     }
 
-    .btn-neo-primary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);
-        color: white;
-    }
-
-    .btn-neo-secondary {
-        background: #ffffff;
-        color: #64748b;
-        border: 1px solid #e2e8f0;
-    }
-
-    .btn-neo-secondary:hover {
-        background: #f8fafc;
-        color: #334155;
-    }
-
-    /* Alertas suaves */
-    .alert-neo {
-        border: none;
+    .info-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        color: var(--color-text-tertiary);
+        margin-top: 12px;
+        padding: 6px 10px;
+        background: var(--color-bg);
         border-radius: var(--radius-md);
-        box-shadow: var(--shadow-soft);
     }
 </style>
+{% endblock %}
 
-<div class="container py-4">
-    <div class="row justify-content-center">
-        <div class="col-md-8 col-lg-6">
-            
-            {% if messages %}
-                {% for message in messages %}
-                    <div class="alert alert-{% if message.tags == 'success' %}success{% elif message.tags == 'warning' %}warning{% else %}danger{% endif %} alert-dismissible fade show alert-neo d-flex align-items-center" role="alert">
-                        {% if message.tags == 'success' %}
-                            <i class="bi bi-check-circle-fill fs-5 me-3"></i>
-                        {% else %}
-                            <i class="bi bi-exclamation-triangle-fill fs-5 me-3"></i>
-                        {% endif %}
-                        <div>{{ message }}</div>
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                {% endfor %}
-            {% endif %}
+{% block content %}
+<div class="form-container">
 
-            <div class="card-neo mb-4">
-                <div class="bg-light px-4 py-4 border-bottom d-flex align-items-center">
-                    <div class="bg-indigo bg-opacity-10 text-primary rounded-circle d-flex justify-content-center align-items-center me-3" style="width: 48px; height: 48px; background-color: #eef2ff; color: #6366f1;">
-                        <i class="bi bi-receipt fs-4"></i>
-                    </div>
-                    <div>
-                        <h4 class="mb-0 fw-bold text-dark">{{ titulo }}</h4>
-                        <p class="small text-muted mb-0">Ingresa los datos o deja que el robot los lea</p>
-                    </div>
-                </div>
-                
-                <div class="card-body p-4 p-md-5">
-                    <form method="post" enctype="multipart/form-data"> 
-                        {% csrf_token %}
-
-                        <div class="mb-5">
-                            <label class="form-label fw-bold text-dark mb-3">Evidencia del Gasto</label>
-                            
-                            <div class="upload-zone">
-                                <i class="bi bi-cloud-arrow-up-fill text-primary mb-2 d-block" style="font-size: 2.5rem; color: #6366f1;"></i>
-                                <h6 class="fw-bold text-dark mb-1">Sube la foto de la boleta o factura</h6>
-                                <p class="small text-muted mb-3">Formatos soportados: JPG, PNG, PDF</p>
-                                
-                                {{ form.imagen }} 
-                                
-                                {% if form.imagen.errors %}
-                                    <div class="text-danger small mt-2 fw-bold"><i class="bi bi-exclamation-circle me-1"></i> {{ form.imagen.errors.0 }}</div>
-                                {% endif %}
-                            </div>
-                        </div>
-
-                        <hr class="text-muted opacity-25 mb-4">
-
-                        <div class="row g-3">
-                            {% for field in form %}
-                                {% if field.name != 'imagen' and field.name != 'imagen_boleta' %}
-                                    <div class="col-12 {% if field.name == 'monto_total' or field.name == 'fecha_emision' or field.name == 'rut_emisor' or field.name == 'folio' %}col-md-6{% endif %} mb-2">
-                                        <label for="{{ field.id_for_label }}" class="form-label small fw-bold text-secondary text-uppercase" style="letter-spacing: 0.5px; font-size: 0.7rem;">
-                                            {{ field.label }}
-                                        </label>
-                                        {{ field }}
-                                        {% if field.errors %}
-                                            <div class="text-danger small mt-1"><i class="bi bi-exclamation-circle me-1"></i> {{ field.errors.0 }}</div>
-                                        {% endif %}
-                                    </div>
-                                {% endif %}
-                            {% endfor %}
-                        </div>
-
-                        <div class="d-flex flex-column flex-md-row gap-3 mt-5">
-                            <button type="submit" class="btn btn-neo btn-neo-primary flex-grow-1">
-                                <i class="bi bi-magic me-2"></i> Procesar Documento
-                            </button>
-                            <a href="{% url 'dashboard' %}" class="btn btn-neo btn-neo-secondary text-center">
-                                Cancelar
-                            </a>
-                        </div>
-                    </form>
-                </div>
-            </div>
-            
-            <div class="text-center mt-4 text-muted small d-flex justify-content-center align-items-center gap-2">
-                <i class="bi bi-shield-check text-success"></i> Seguro y respaldado en la nube
-            </div>
-
-        </div>
+    <div style="margin-bottom: 16px;">
+        <h1 class="page-title">{{ titulo }}</h1>
+        <p class="page-subtitle">Sube la boleta y nuestro motor leerá los datos automáticamente</p>
     </div>
+
+    <form method="post" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+
+        <div class="panel">
+            <div class="form-group">
+                <label class="form-label">Evidencia del documento</label>
+                <div class="dropzone" id="dropzone">
+                    <i class="bi bi-cloud-arrow-up"></i>
+                    <div class="dropzone-title">Sube la foto de la boleta o factura</div>
+                    <div class="dropzone-sub">JPG, PNG o PDF · máx. 10 MB</div>
+                    {{ form.imagen }}
+                </div>
+                <div id="preview"></div>
+                {% if form.imagen.errors %}
+                    <div class="field-error">{{ form.imagen.errors.0 }}</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="panel">
+            <h3 style="font-size: 14px; font-weight: 600; margin: 0 0 16px;">Detalles del gasto</h3>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.monto_total.id_for_label }}">Monto total</label>
+                    {{ form.monto_total }}
+                    {% if form.monto_total.errors %}<div class="field-error">{{ form.monto_total.errors.0 }}</div>{% endif %}
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.fecha_emision.id_for_label }}">Fecha de emisión</label>
+                    {{ form.fecha_emision }}
+                    {% if form.fecha_emision.errors %}<div class="field-error">{{ form.fecha_emision.errors.0 }}</div>{% endif %}
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.rut_emisor.id_for_label }}">RUT del proveedor</label>
+                    {{ form.rut_emisor }}
+                    {% if form.rut_emisor.errors %}<div class="field-error">{{ form.rut_emisor.errors.0 }}</div>{% endif %}
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.folio.id_for_label }}">Folio</label>
+                    {{ form.folio }}
+                    {% if form.folio.errors %}<div class="field-error">{{ form.folio.errors.0 }}</div>{% endif %}
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.categoria.id_for_label }}">Categoría</label>
+                    {{ form.categoria }}
+                    {% if form.categoria.errors %}<div class="field-error">{{ form.categoria.errors.0 }}</div>{% endif %}
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.obra.id_for_label }}">Proyecto / obra</label>
+                    {{ form.obra }}
+                    {% if form.obra.errors %}<div class="field-error">{{ form.obra.errors.0 }}</div>{% endif %}
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="{{ form.descripcion.id_for_label }}">Descripción / detalle</label>
+                {{ form.descripcion }}
+            </div>
+
+            <div class="info-pill">
+                <i class="bi bi-shield-check"></i> Tus datos se respaldan automáticamente
+            </div>
+        </div>
+
+        <div class="actions-row">
+            <a href="{% url 'historial_gastos' %}" class="btn-secondary-modern btn-large">Cancelar</a>
+            <button type="submit" class="btn-primary-modern btn-large">
+                <i class="bi bi-magic"></i> {% if gasto %}Guardar cambios{% else %}Procesar documento{% endif %}
+            </button>
+        </div>
+    </form>
 </div>
+
+<script>
+// Aplicar clase moderna a los inputs Django
+document.querySelectorAll('input[type="text"], input[type="number"], input[type="date"], select, textarea').forEach(el => {
+    if (!el.classList.contains('input-modern')) el.classList.add('input-modern');
+});
+
+// Preview de la imagen
+const dropzone = document.getElementById('dropzone');
+const fileInput = document.querySelector('input[type="file"]');
+const preview = document.getElementById('preview');
+
+if (fileInput) {
+    fileInput.addEventListener('change', e => {
+        const file = e.target.files[0];
+        if (!file) { preview.innerHTML = ''; return; }
+        if (file.type.startsWith('image/')) {
+            preview.innerHTML = `<img src="${URL.createObjectURL(file)}" class="preview-img" alt="Vista previa">`;
+        } else {
+            preview.innerHTML = `<div class="info-pill"><i class="bi bi-file-earmark-pdf"></i> ${file.name}</div>`;
+        }
+    });
+}
+</script>
 {% endblock %}

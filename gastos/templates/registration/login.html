@@ -3,141 +3,202 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Iniciar Sesión | ObraGastos</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <meta name="theme-color" content="#534AB7">
+    <title>Iniciar sesión · ObraGastos</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
 
     <style>
+        :root {
+            --color-bg: #FAFAF9;
+            --color-surface: #FFFFFF;
+            --color-border: #E5E5E2;
+            --color-text-primary: #2C2C2A;
+            --color-text-secondary: #5F5E5A;
+            --color-text-tertiary: #888780;
+            --color-primary: #534AB7;
+            --color-primary-light: #EEEDFE;
+            --color-primary-hover: #3C3489;
+            --color-danger: #A32D2D;
+            --color-danger-light: #FCEBEB;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+        }
+
+        * { box-sizing: border-box; }
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: #1e293b; /* El mismo azul oscuro de tu Sidebar */
-            height: 100vh;
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--color-bg);
+            min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
+            padding: 20px;
+            margin: 0;
+            color: var(--color-text-primary);
         }
 
-        .card-login {
+        .login-container {
             width: 100%;
-            max-width: 400px;
-            border: none;
-            border-radius: 16px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-            overflow: hidden;
+            max-width: 380px;
         }
 
-        .card-header-custom {
-            background: white;
-            padding-top: 3rem;
-            padding-bottom: 1rem;
+        .brand-block {
             text-align: center;
-            border: none;
+            margin-bottom: 24px;
+        }
+        .brand-logo {
+            width: 56px; height: 56px;
+            margin: 0 auto 12px;
+            background: var(--color-primary);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 600;
+            font-size: 22px;
+            letter-spacing: -0.5px;
+        }
+        .brand-title {
+            font-size: 22px;
+            font-weight: 600;
+            margin: 0 0 4px;
+            letter-spacing: -0.4px;
+        }
+        .brand-subtitle {
+            font-size: 13.5px;
+            color: var(--color-text-tertiary);
+            margin: 0;
         }
 
-        .form-control {
-            padding: 12px 15px;
-            border-radius: 8px;
-            border: 1px solid #e2e8f0;
-            background-color: #f8fafc;
-            font-size: 0.95rem;
+        .login-card {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            padding: 28px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
         }
 
-        .form-control:focus {
-            background-color: #fff;
-            border-color: #0d6efd;
-            box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.1);
+        .form-group { margin-bottom: 16px; }
+        .form-label {
+            display: block;
+            font-size: 12px;
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.4px;
+            color: var(--color-text-secondary);
+            margin-bottom: 6px;
         }
 
-        .input-group-text {
-            background-color: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-right: none;
-            border-radius: 8px 0 0 8px;
-            color: #64748b;
+        .input-wrapper { position: relative; }
+        .input-wrapper i {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--color-text-tertiary);
+            font-size: 15px;
+            pointer-events: none;
         }
-        
-        /* Ajuste para que el input pegado al icono no tenga borde izquierdo */
-        .input-group .form-control {
-            border-left: none;
-            border-radius: 0 8px 8px 0;
+        .input-modern {
+            width: 100%;
+            padding: 10px 12px 10px 38px;
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            background: var(--color-surface);
+            font-size: 14px;
+            font-family: inherit;
+            color: var(--color-text-primary);
+            transition: all 0.18s ease;
+        }
+        .input-modern:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px rgba(83, 74, 183, 0.1);
         }
 
         .btn-login {
-            padding: 12px;
-            font-weight: 600;
-            border-radius: 8px;
-            background-color: #0d6efd;
+            width: 100%;
+            padding: 11px;
+            background: var(--color-primary);
+            color: #fff;
             border: none;
-            transition: all 0.3s ease;
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.18s ease;
+            margin-top: 8px;
+        }
+        .btn-login:hover { background: var(--color-primary-hover); }
+
+        .alert-error {
+            background: var(--color-danger-light);
+            border: 1px solid var(--color-danger);
+            color: #791F1F;
+            padding: 10px 12px;
+            border-radius: var(--radius-md);
+            font-size: 13px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
         }
 
-        .btn-login:hover {
-            background-color: #0b5ed7;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(13, 110, 253, 0.2);
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 12px;
+            color: var(--color-text-tertiary);
         }
     </style>
 </head>
 <body>
 
-    <div class="container px-4">
-        <div class="card card-login mx-auto bg-white">
-            
-            <div class="card-header-custom">
-                <div class="mb-3">
-                    <span class="bg-primary bg-opacity-10 text-primary p-3 rounded-circle d-inline-block">
-                        <i class="bi bi-building-fill-gear fs-1"></i>
-                    </span>
-                </div>
-                <h4 class="fw-bold text-dark mb-1">Bienvenido</h4>
-                <p class="text-muted small">Ingresa a tu cuenta de ObraGastos</p>
-            </div>
+<div class="login-container">
 
-            <div class="card-body p-4 pt-2">
-                
-                {% if form.errors %}
-                    <div class="alert alert-danger d-flex align-items-center small py-2 mb-3" role="alert">
-                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                        <div>Usuario o contraseña incorrectos.</div>
-                    </div>
-                {% endif %}
-
-                <form method="post" action="{% url 'login' %}">
-                    {% csrf_token %}
-                    
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold text-muted text-uppercase">Usuario</label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="bi bi-person"></i></span>
-                            <input type="text" name="username" class="form-control" placeholder="Ej: admin" required autofocus>
-                        </div>
-                    </div>
-
-                    <div class="mb-4">
-                        <label class="form-label small fw-bold text-muted text-uppercase">Contraseña</label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="bi bi-lock"></i></span>
-                            <input type="password" name="password" class="form-control" placeholder="••••••••" required>
-                        </div>
-                    </div>
-
-                    <div class="d-grid gap-2">
-                        <button type="submit" class="btn btn-primary btn-login text-white">
-                            Iniciar Sesión <i class="bi bi-arrow-right-short ms-1"></i>
-                        </button>
-                    </div>
-
-                </form>
-            </div>
-            
-            <div class="card-footer bg-light text-center py-3 border-0">
-                <p class="small text-muted mb-0">
-                    &copy; 2026 Gastos de Obra System
-                </p>
-            </div>
-        </div>
+    <div class="brand-block">
+        <div class="brand-logo">OG</div>
+        <h1 class="brand-title">ObraGastos</h1>
+        <p class="brand-subtitle">Control de gastos para constructoras</p>
     </div>
+
+    <div class="login-card">
+        {% if form.errors %}
+            <div class="alert-error">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                <div>Usuario o contraseña incorrectos.</div>
+            </div>
+        {% endif %}
+
+        <form method="post" action="{% url 'login' %}">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label for="username" class="form-label">Usuario</label>
+                <div class="input-wrapper">
+                    <i class="bi bi-person"></i>
+                    <input type="text" id="username" name="username" class="input-modern" placeholder="Tu usuario" required autofocus autocomplete="username">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="password" class="form-label">Contraseña</label>
+                <div class="input-wrapper">
+                    <i class="bi bi-lock"></i>
+                    <input type="password" id="password" name="password" class="input-modern" placeholder="••••••••" required autocomplete="current-password">
+                </div>
+            </div>
+
+            <button type="submit" class="btn-login">
+                Iniciar sesión <i class="bi bi-arrow-right ms-1"></i>
+            </button>
+        </form>
+    </div>
+
+    <p class="footer">© {% now "Y" %} ObraGastos · Todos los derechos reservados</p>
+</div>
 
 </body>
 </html>

@@ -1,45 +1,155 @@
 {% extends 'base.html' %}
-{% block header_title %}Mis Proyectos{% endblock %}
+
+{% block title %}Proyectos · ObraGastos{% endblock %}
+
+{% block extra_head %}
+<style>
+    .header-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        gap: 16px;
+        margin-bottom: 24px;
+        flex-wrap: wrap;
+    }
+
+    .obras-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 14px;
+    }
+
+    .obra-card {
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-lg);
+        padding: 18px;
+        transition: all 0.18s ease;
+        display: flex;
+        flex-direction: column;
+    }
+    .obra-card:hover {
+        border-color: var(--color-primary);
+        box-shadow: 0 2px 8px rgba(83, 74, 183, 0.06);
+    }
+
+    .obra-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 8px;
+        gap: 10px;
+    }
+    .obra-name {
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--color-text-primary);
+        margin: 0;
+        line-height: 1.3;
+    }
+
+    .badge-status {
+        font-size: 11px;
+        font-weight: 500;
+        padding: 3px 8px;
+        border-radius: var(--radius-sm);
+        white-space: nowrap;
+    }
+    .badge-active { background: var(--color-success-light); color: #085041; }
+    .badge-archived { background: var(--color-bg); color: var(--color-text-tertiary); }
+
+    .obra-meta {
+        font-size: 12.5px;
+        color: var(--color-text-tertiary);
+        margin: 4px 0 14px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .obra-actions {
+        margin-top: auto;
+        display: flex;
+        gap: 8px;
+        padding-top: 12px;
+        border-top: 1px solid var(--color-border);
+    }
+    .obra-actions a {
+        flex: 1;
+        text-align: center;
+        font-size: 12px;
+        padding: 7px 10px;
+        border-radius: var(--radius-md);
+        background: var(--color-bg);
+        color: var(--color-text-primary);
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.18s ease;
+    }
+    .obra-actions a:hover {
+        background: var(--color-primary-light);
+        color: var(--color-primary-hover);
+    }
+
+    .empty-state {
+        background: var(--color-surface);
+        border: 1px dashed var(--color-border-strong);
+        border-radius: var(--radius-lg);
+        padding: 60px 20px;
+        text-align: center;
+        color: var(--color-text-tertiary);
+    }
+    .empty-state i { font-size: 40px; opacity: 0.4; display: block; margin-bottom: 8px; }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <p class="text-muted mb-0">Gestiona las obras activas de tu empresa</p>
-    <a href="{% url 'crear_obra' %}" class="btn btn-primary shadow-sm">
-        <i class="bi bi-plus-lg me-2"></i>Nuevo Proyecto
+
+<div class="header-row">
+    <div>
+        <h1 class="page-title">Proyectos</h1>
+        <p class="page-subtitle">Gestiona las obras activas de tu empresa</p>
+    </div>
+    <a href="{% url 'crear_obra' %}" class="btn-primary-modern">
+        <i class="bi bi-plus-lg"></i> Nuevo proyecto
     </a>
 </div>
 
-<div class="row g-4">
+{% if obras %}
+<div class="obras-grid">
     {% for obra in obras %}
-    <div class="col-md-6 col-lg-4">
-        <div class="card-modern h-100 p-4 border-start border-4 {% if obra.activo %}border-success{% else %}border-secondary{% endif %}">
-            <div class="d-flex justify-content-between align-items-start mb-2">
-                <h5 class="fw-bold text-dark mb-0">{{ obra.nombre }}</h5>
-                {% if obra.activo %}
-                    <span class="badge bg-success bg-opacity-10 text-success">Activo</span>
-                {% else %}
-                    <span class="badge bg-secondary bg-opacity-10 text-secondary">Archivado</span>
-                {% endif %}
-            </div>
-            <p class="text-muted small mb-3">
-                <i class="bi bi-geo-alt-fill me-1"></i> {{ obra.ubicacion|default:"Sin ubicación" }}
-            </p>
-            <div class="mt-auto d-flex justify-content-end">
-                <a href="{% url 'definir_presupuesto' obra.id %}" class="btn btn-sm btn-light border hover-shadow">
-                    <i class="bi bi-calculator me-1"></i> Presupuesto <i class="bi bi-arrow-right-short ms-1"></i>
-                </a>
-                <a href="{% url 'dashboard' %}?obra={{ obra.id }}" class="btn btn-sm btn-light border hover-shadow">
-                    Ver Gastos <i class="bi bi-arrow-right-short ms-1"></i>
-                </a>
-            </div>
+    <div class="obra-card">
+        <div class="obra-card-header">
+            <h3 class="obra-name">{{ obra.nombre }}</h3>
+            {% if obra.activo %}
+                <span class="badge-status badge-active">Activo</span>
+            {% else %}
+                <span class="badge-status badge-archived">Archivado</span>
+            {% endif %}
         </div>
-    </div>
-    {% empty %}
-    <div class="col-12 text-center py-5">
-        <div class="text-muted mb-3"><i class="bi bi-buildings fs-1"></i></div>
-        <h4>No tienes proyectos creados</h4>
-        <p class="text-muted">Crea tu primera obra para empezar a asignar gastos.</p>
+        <div class="obra-meta">
+            <i class="bi bi-geo-alt"></i> {{ obra.ubicacion|default:"Sin ubicación" }}
+        </div>
+        <div class="obra-actions">
+            <a href="{% url 'definir_presupuesto' obra.id %}" title="Definir presupuesto">
+                <i class="bi bi-calculator"></i> Presupuesto
+            </a>
+            <a href="{% url 'dashboard' %}?obra={{ obra.id }}" title="Ver gastos del proyecto">
+                <i class="bi bi-bar-chart"></i> Resumen
+            </a>
+        </div>
     </div>
     {% endfor %}
 </div>
+{% else %}
+<div class="empty-state">
+    <i class="bi bi-buildings"></i>
+    <h3 style="font-weight: 600; margin: 0 0 6px; font-size: 15px;">No tienes proyectos creados</h3>
+    <p style="margin: 0 0 16px; font-size: 13px;">Crea tu primera obra para empezar a asignar gastos.</p>
+    <a href="{% url 'crear_obra' %}" class="btn-primary-modern">
+        <i class="bi bi-plus-lg"></i> Crear primer proyecto
+    </a>
+</div>
+{% endif %}
+
 {% endblock %}

@@ -1,20 +1,41 @@
+"""
+Configuración Django.
+
+CORRECCIONES:
+- Logging configurado (reemplaza los print())
+- ALLOWED_HOSTS desde .env
+- Cabeceras de seguridad básicas
+- Configuración de tamaño máximo de upload
+"""
 from pathlib import Path
 import os
 from dotenv import load_dotenv
 
-# 1. Cargar variables de entorno
 load_dotenv()
 
-# Build paths inside the project
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# 2. Configuración de Seguridad (Desde .env)
-SECRET_KEY = os.getenv('SECRET_KEY')
+# --- SEGURIDAD ---
+SECRET_KEY = os.getenv('SECRET_KEY', 'change-me-in-production')
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    h.strip() for h in os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',') if h.strip()
+]
 
-# Application definition
+# Cabeceras de seguridad
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = 'SAMEORIGIN'
+
+if not DEBUG:
+    SECURE_SSL_REDIRECT = os.getenv('SECURE_SSL_REDIRECT', 'False') == 'True'
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+
+# --- APPS ---
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -41,7 +62,7 @@ ROOT_URLCONF = 'core.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'], 
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -56,7 +77,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'core.wsgi.application'
 
-# Database
+# --- BASE DE DATOS ---
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -64,7 +85,7 @@ DATABASES = {
     }
 }
 
-# Password validation
+# --- VALIDACIÓN DE CONTRASEÑAS ---
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
@@ -72,27 +93,80 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-# Internationalization
+# --- LOCALIZACIÓN ---
 LANGUAGE_CODE = 'es-cl'
 TIME_ZONE = 'America/Santiago'
 USE_I18N = True
 USE_L10N = True
 USE_TZ = True
 
-# Static & Media Files
+# --- ARCHIVOS ESTÁTICOS Y MEDIA ---
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-# Authentication
+# Tamaño máximo de uploads (50 MB para soporte de carga masiva grande)
+DATA_UPLOAD_MAX_MEMORY_SIZE = 50 * 1024 * 1024
+FILE_UPLOAD_MAX_MEMORY_SIZE = 50 * 1024 * 1024
+DATA_UPLOAD_MAX_NUMBER_FILES = 200
+
+# --- AUTENTICACIÓN ---
 LOGIN_REDIRECT_URL = '/'
-LOGOUT_REDIRECT_URL = '/accounts/login/' 
-LOGIN_URL = '/accounts/login/'
+LOGOUT_REDIRECT_URL = '/login/'
+LOGIN_URL = '/login/'
 
-X_FRAME_OPTIONS = 'SAMEORIGIN'
-
-# 3. Credenciales de Microsoft (Desde .env)
+# --- MICROSOFT GRAPH (SHAREPOINT) ---
 MS_CLIENT_ID = os.getenv('MS_CLIENT_ID')
 MS_TENANT_ID = os.getenv('MS_TENANT_ID')
 MS_CLIENT_SECRET = os.getenv('MS_CLIENT_SECRET')
 MS_SITE_ID = os.getenv('MS_SITE_ID')
+
+# --- LOGGING ---
+LOGS_DIR = BASE_DIR / 'logs'
+LOGS_DIR.mkdir(exist_ok=True)
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {name} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'level': 'DEBUG' if DEBUG else 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+        'file': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': LOGS_DIR / 'obragastos.log',
+            'maxBytes': 5 * 1024 * 1024,  # 5 MB
+            'backupCount': 5,
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'gastos': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG' if DEBUG else 'INFO',
+            'propagate': False,
+        },
+    },
+}
+
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

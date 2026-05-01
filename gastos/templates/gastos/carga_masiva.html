@@ -1,52 +1,321 @@
 {% extends 'base.html' %}
 
+{% block title %}Carga masiva · ObraGastos{% endblock %}
+
+{% block extra_head %}
+<style>
+    .upload-container {
+        max-width: 720px;
+        margin: 0 auto;
+    }
+
+    .panel {
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-lg);
+        padding: 24px;
+        margin-bottom: 16px;
+    }
+
+    .field-group {
+        margin-bottom: 20px;
+    }
+    .field-label {
+        display: block;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        font-weight: 600;
+        color: var(--color-text-secondary);
+        margin-bottom: 8px;
+    }
+
+    .dropzone {
+        border: 2px dashed var(--color-border-strong);
+        border-radius: var(--radius-lg);
+        padding: 40px 20px;
+        text-align: center;
+        background: var(--color-bg);
+        cursor: pointer;
+        transition: var(--transition);
+        position: relative;
+    }
+    .dropzone:hover, .dropzone.dragging {
+        border-color: var(--color-primary);
+        background: var(--color-primary-light);
+    }
+    .dropzone-icon {
+        font-size: 36px;
+        color: var(--color-primary);
+        margin-bottom: 8px;
+    }
+    .dropzone-title {
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--color-text-primary);
+        margin-bottom: 4px;
+    }
+    .dropzone-subtitle {
+        font-size: 12.5px;
+        color: var(--color-text-tertiary);
+    }
+    .dropzone input[type="file"] {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        cursor: pointer;
+    }
+
+    .files-preview {
+        margin-top: 16px;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 10px;
+    }
+    .file-preview {
+        position: relative;
+        background: var(--color-bg);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+        padding: 8px;
+        font-size: 11px;
+    }
+    .file-preview .thumb {
+        width: 100%;
+        height: 80px;
+        background: var(--color-surface);
+        border-radius: var(--radius-sm);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 6px;
+        overflow: hidden;
+    }
+    .file-preview .thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .file-preview .thumb i {
+        font-size: 28px;
+        color: var(--color-text-tertiary);
+    }
+    .file-preview .name {
+        font-weight: 500;
+        color: var(--color-text-primary);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .file-preview .size {
+        color: var(--color-text-tertiary);
+        font-size: 10.5px;
+    }
+    .file-preview .remove {
+        position: absolute;
+        top: 4px; right: 4px;
+        width: 22px; height: 22px;
+        border-radius: 50%;
+        background: var(--color-danger);
+        color: #fff;
+        border: none;
+        font-size: 11px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .actions-row {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+        margin-top: 20px;
+    }
+    .btn-large {
+        padding: 10px 20px;
+        font-size: 14px;
+    }
+
+    .progress-area {
+        margin-top: 16px;
+        padding: 14px;
+        background: var(--color-info-light);
+        border: 1px solid var(--color-info);
+        border-radius: var(--radius-md);
+        font-size: 13px;
+        display: none;
+    }
+    .progress-area.active { display: block; }
+
+    .help-text {
+        font-size: 12.5px;
+        color: var(--color-text-tertiary);
+        margin-top: 6px;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-8 col-lg-6">
-        <div class="card shadow border-0 mt-4">
-            <div class="card-header bg-dark text-white text-center py-4">
-                <h3 class="fw-bold mb-0"><i class="bi bi-cloud-upload me-2"></i>Carga Masiva</h3>
+
+<div class="upload-container">
+    <div style="margin-bottom: 16px;">
+        <h1 class="page-title">Carga masiva de boletas</h1>
+        <p class="page-subtitle">Sube varias boletas y nuestro motor las leerá automáticamente</p>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" id="uploadForm">
+        {% csrf_token %}
+
+        <div class="panel">
+
+            {% if obras %}
+            <div class="field-group">
+                <label class="field-label" for="obraSelect">Asignar a proyecto (opcional)</label>
+                <select name="obra_id" id="obraSelect" class="input-modern">
+                    <option value="">-- Sin proyecto asignado --</option>
+                    {% for obra in obras %}
+                        <option value="{{ obra.id }}">{{ obra.nombre }}</option>
+                    {% endfor %}
+                </select>
+                <div class="help-text">Las boletas que cargues quedarán vinculadas al proyecto seleccionado</div>
             </div>
-            
-            <div class="card-body p-4">
-                <form method="post" enctype="multipart/form-data">
-                    {% csrf_token %}
-                    
-                    {% if form.errors %}
-                        <div class="alert alert-danger">
-                            <strong>Error:</strong> {{ form.errors }}
-                        </div>
-                    {% endif %}
+            {% endif %}
 
-                    <div class="mb-4">
-                        <label class="form-label fw-bold">Selecciona tus imágenes</label>
-                        {{ form.imagenes }}
-                        <div class="form-text">Usa Ctrl o Cmd para seleccionar varias fotos a la vez.</div>
-                    </div>
+            <div class="field-group">
+                <label class="field-label">Archivos</label>
 
-                    <div class="d-grid gap-2">
-                        <button type="submit" class="btn btn-primary btn-lg" id="btn-procesar">
-                            Procesar Todo
-                        </button>
-                        <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">Volver</a>
+                <div class="dropzone" id="dropzone">
+                    <i class="bi bi-cloud-arrow-up dropzone-icon"></i>
+                    <div class="dropzone-title">Arrastra tus boletas aquí</div>
+                    <div class="dropzone-subtitle">o haz clic para seleccionar (JPG, PNG, PDF · máx. 10 MB c/u)</div>
+                    <input type="file" name="imagenes" id="fileInput" multiple accept="image/*,.pdf" required>
+                </div>
+
+                <div class="files-preview" id="filesPreview"></div>
+
+                {% if form.errors %}
+                    <div class="alert-modern alert-danger-modern" style="margin-top: 12px;">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        <div>{{ form.errors }}</div>
                     </div>
-                </form>
-                
-                <div id="loading" class="text-center mt-3 d-none">
-                    <div class="spinner-border text-primary" role="status"></div>
-                    <p class="small text-muted">El robot está trabajando...</p>
+                {% endif %}
+            </div>
+
+            <div class="progress-area" id="progressArea">
+                <i class="bi bi-arrow-repeat" style="animation: spin 1s linear infinite; display: inline-block;"></i>
+                <strong>Procesando boletas...</strong> Esto puede tardar 1-2 segundos por archivo.
+                <div style="margin-top: 8px; font-size: 12px; color: var(--color-text-tertiary);">
+                    No cierres esta página hasta que termine.
                 </div>
             </div>
+
+            <div class="actions-row">
+                <a href="{% url 'historial_gastos' %}" class="btn-secondary-modern btn-large">
+                    Cancelar
+                </a>
+                <button type="submit" class="btn-primary-modern btn-large" id="submitBtn">
+                    <i class="bi bi-magic"></i> Procesar boletas
+                </button>
+            </div>
+
         </div>
-    </div>
+    </form>
 </div>
 
+<style>
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+</style>
+
 <script>
-    document.querySelector('form').addEventListener('submit', function() {
-        var btn = document.getElementById('btn-procesar');
-        btn.disabled = true;
-        btn.innerHTML = 'Subiendo...';
-        document.getElementById('loading').classList.remove('d-none');
+const dropzone = document.getElementById('dropzone');
+const fileInput = document.getElementById('fileInput');
+const filesPreview = document.getElementById('filesPreview');
+const submitBtn = document.getElementById('submitBtn');
+const progressArea = document.getElementById('progressArea');
+
+let selectedFiles = [];
+
+['dragenter', 'dragover'].forEach(evt => {
+    dropzone.addEventListener(evt, e => {
+        e.preventDefault();
+        dropzone.classList.add('dragging');
     });
+});
+['dragleave', 'drop'].forEach(evt => {
+    dropzone.addEventListener(evt, e => {
+        e.preventDefault();
+        dropzone.classList.remove('dragging');
+    });
+});
+
+dropzone.addEventListener('drop', e => {
+    const files = Array.from(e.dataTransfer.files);
+    addFiles(files);
+});
+
+fileInput.addEventListener('change', () => {
+    addFiles(Array.from(fileInput.files));
+});
+
+function addFiles(newFiles) {
+    selectedFiles = [...selectedFiles, ...newFiles];
+    syncFileInput();
+    renderPreview();
+}
+
+function syncFileInput() {
+    const dt = new DataTransfer();
+    selectedFiles.forEach(f => dt.items.add(f));
+    fileInput.files = dt.files;
+}
+
+function removeFile(idx) {
+    selectedFiles.splice(idx, 1);
+    syncFileInput();
+    renderPreview();
+}
+
+function formatSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1048576) return (bytes / 1024).toFixed(0) + ' KB';
+    return (bytes / 1048576).toFixed(1) + ' MB';
+}
+
+function renderPreview() {
+    if (selectedFiles.length === 0) {
+        filesPreview.innerHTML = '';
+        return;
+    }
+    filesPreview.innerHTML = selectedFiles.map((f, i) => {
+        const isImage = f.type.startsWith('image/');
+        const thumb = isImage
+            ? `<img src="${URL.createObjectURL(f)}" alt="${f.name}">`
+            : `<i class="bi bi-file-earmark-pdf"></i>`;
+        return `
+            <div class="file-preview">
+                <div class="thumb">${thumb}</div>
+                <div class="name" title="${f.name}">${f.name}</div>
+                <div class="size">${formatSize(f.size)}</div>
+                <button type="button" class="remove" onclick="removeFile(${i})" aria-label="Quitar archivo">×</button>
+            </div>
+        `;
+    }).join('');
+}
+
+document.getElementById('uploadForm').addEventListener('submit', e => {
+    if (selectedFiles.length === 0) {
+        e.preventDefault();
+        alert('Selecciona al menos un archivo');
+        return;
+    }
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="bi bi-arrow-repeat" style="animation: spin 1s linear infinite; display: inline-block;"></i> Procesando...';
+    progressArea.classList.add('active');
+});
 </script>
+
 {% endblock %}
