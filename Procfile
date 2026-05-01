@@ -1,1 +1,1 @@
-web: gunicorn core.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --timeout 120
+web: DJANGO_SETTINGS_MODULE=core.settings_railway gunicorn core.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --timeout 120
