@@ -139,3 +139,7 @@ LOGGING = {
 import logging
 _log = logging.getLogger(__name__)
 _log.warning(f"R2_BUCKET={R2_BUCKET_NAME} R2_ACCOUNT={R2_ACCOUNT_ID[:8] if R2_ACCOUNT_ID else 'VACIO'} R2_KEY={R2_ACCESS_KEY[:8] if R2_ACCESS_KEY else 'VACIO'} STORAGE={DEFAULT_FILE_STORAGE if R2_BUCKET_NAME else 'LOCAL'}")
+
+import boto3
+boto3.set_stream_logger('boto3', logging.DEBUG)
+boto3.set_stream_logger('botocore', logging.DEBUG)
