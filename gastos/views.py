@@ -2,7 +2,7 @@ import io
 import os
 import logging
 from datetime import date, datetime
-
+import fitz
 import openpyxl
 from openpyxl.styles import Font, PatternFill
 from PIL import Image
@@ -37,7 +37,36 @@ def get_empresa_usuario(user):
         return user.perfil.empresa
     return None
 
+def pdf_a_imagen(archivo_file):
+    """
+    Convierte la primera página de un PDF a PNG.
+    Retorna un InMemoryUploadedFile con la imagen, o None si falla.
+    """
+    import fitz
+    import io
+    from django.core.files.uploadedfile import InMemoryUploadedFile
 
+    try:
+        contenido = archivo_file.read()
+        archivo_file.seek(0)
+        
+        doc = fitz.open(stream=contenido, filetype="pdf")
+        page = doc.load_page(0)
+        pix = page.get_pixmap(matrix=fitz.Matrix(2, 2))
+        
+        img_bytes = pix.tobytes("png")
+        img_io = io.BytesIO(img_bytes)
+        
+        nombre_png = archivo_file.name.replace('.pdf', '.png').replace('.PDF', '.png')
+        
+        return InMemoryUploadedFile(
+            img_io, 'imagen', nombre_png,
+            'image/png', len(img_bytes), None
+        )
+    except Exception as e:
+        logger.warning(f"No se pudo convertir PDF a imagen: {e}")
+        return None
+    
 def get_gastos_empresa(user):
     """
     Retorna SOLO los gastos de la empresa del usuario.
@@ -257,7 +286,13 @@ def crear_gasto(request):
                     logger.exception(f"Error procesando OCR")
                     messages.warning(request, f"Error procesando imagen: {e}")
 
-            # Guardar el gasto (aquí sube la imagen a Cloudinary)
+            if archivo and archivo.name.lower().endswith('.pdf'):
+                imagen_convertida = pdf_a_imagen(archivo)
+                if imagen_convertida:
+                    request.FILES['imagen'] = imagen_convertida
+                    form.files['imagen'] = imagen_convertida
+                    gasto.imagen = imagen_convertida
+
             gasto.save()
 
             if ocr_exitoso:
