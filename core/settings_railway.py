@@ -23,6 +23,8 @@ INSTALLED_APPS = [
     'django.contrib.humanize',
     'storages',
     'gastos',
+    'cloudinary_storage',
+    'cloudinary',
 ]
 
 MIDDLEWARE = [
@@ -67,25 +69,10 @@ STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-R2_BUCKET_NAME   = os.getenv('R2_BUCKET_NAME', '')
-R2_ACCOUNT_ID    = os.getenv('R2_ACCOUNT_ID', '')
-R2_ACCESS_KEY    = os.getenv('R2_ACCESS_KEY', '')
-R2_SECRET_KEY    = os.getenv('R2_SECRET_KEY', '')
-R2_CUSTOM_DOMAIN = os.getenv('R2_CUSTOM_DOMAIN', '')
-
-if R2_BUCKET_NAME:
-    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-    AWS_STORAGE_BUCKET_NAME = R2_BUCKET_NAME
-    AWS_ACCESS_KEY_ID = R2_ACCESS_KEY
-    AWS_SECRET_ACCESS_KEY = R2_SECRET_KEY
-    AWS_S3_ENDPOINT_URL = f'https://{R2_ACCOUNT_ID}.r2.cloudflarestorage.com'
-    AWS_S3_CUSTOM_DOMAIN = R2_CUSTOM_DOMAIN or None
-    AWS_DEFAULT_ACL = None          # R2 no soporta ACLs
-    AWS_S3_OBJECT_PARAMETERS = {}   # sin parámetros extra
-    AWS_S3_FILE_OVERWRITE = False
-    AWS_QUERYSTRING_AUTH = False     # URLs públicas sin firma
-    AWS_S3_SIGNATURE_VERSION = 's3v4'
-    MEDIA_URL = f'https://{R2_CUSTOM_DOMAIN}/' if R2_CUSTOM_DOMAIN else f'{AWS_S3_ENDPOINT_URL}/{R2_BUCKET_NAME}/'
+CLOUDINARY_URL = os.getenv('CLOUDINARY_URL', '')
+if CLOUDINARY_URL:
+    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+    MEDIA_URL = '/media/'
 else:
     MEDIA_URL = '/media/'
     MEDIA_ROOT = BASE_DIR / 'media'
