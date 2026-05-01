@@ -2,6 +2,29 @@ from pathlib import Path
 import os
 import dj_database_url
 from dotenv import load_dotenv
+import cloudinary
+
+cloudinary.config(
+    cloud_name=os.getenv('CLOUDINARY_CLOUD_NAME', ''),
+    api_key=os.getenv('CLOUDINARY_API_KEY', ''),
+    api_secret=os.getenv('CLOUDINARY_API_SECRET', ''),
+    secure=True
+)
+
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': os.getenv('CLOUDINARY_CLOUD_NAME', ''),
+    'API_KEY': os.getenv('CLOUDINARY_API_KEY', ''),
+    'API_SECRET': os.getenv('CLOUDINARY_API_SECRET', ''),
+    'SECURE': True,
+    'MEDIA_TAG': 'obragastos',
+    'INVALID_VIDEO_ERROR_MESSAGE': 'Error de video',
+    'EXCLUDED_MEDIA_LIBRARY_DIRS': [],
+    'MAGIC_FILE_PATH': 'magic',
+    'PREFIX': '',
+    'STATIC_TAG': 'staticfiles',
+    'STATICFILES_MANIFEST_ROOT': '',
+    'UPLOAD_PREFIX': '',
+}
 
 load_dotenv()
 
