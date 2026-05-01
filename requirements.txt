@@ -1,32 +1,33 @@
 # Django y servidor
-django==6.0.1
-gunicorn==23.0.0
-whitenoise==6.9.0
+django==5.2.1
+gunicorn==21.2.0
+whitenoise==6.7.0
 
 # Base de datos
-psycopg2-binary==2.9.10
+psycopg2-binary==2.9.9
+dj-database-url==2.2.0
 
 # Archivos en la nube (Cloudflare R2 / S3)
-django-storages==1.14.4
-boto3==1.38.0
+django-storages==1.14.3
+boto3==1.34.69
 
 # OCR y procesamiento de imágenes
 pytesseract==0.3.13
-pillow==12.1.0
-numpy==2.2.6
-opencv-python-headless==4.13.0.90
-pymupdf==1.26.7
-zxing-cpp==2.3.0
-beautifulsoup4==4.14.3
-lxml==6.0.2
+pillow==10.3.0
+numpy==1.26.4
+opencv-python-headless==4.9.0.80
+pymupdf==1.24.1
+zxing-cpp==2.2.1
+beautifulsoup4==4.12.3
+lxml==5.2.1
 
 # Exportación
-openpyxl==3.1.5
-xhtml2pdf==0.2.17
+openpyxl==3.1.2
+xhtml2pdf==0.2.16
 
 # SharePoint
-requests==2.32.5
-msal==1.35.1
+requests==2.31.0
+msal==1.28.0
 
 # Utils
-python-dotenv==1.2.2
+python-dotenv==1.0.1
