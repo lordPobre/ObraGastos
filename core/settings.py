@@ -1,33 +1,30 @@
-"""
-Perseus Control v4 — settings.py
-Multitenant · Railway/Render ready · python-decouple
-"""
-from pathlib import Path
-from decouple import config, Csv
-import dj_database_url
-import os
 
-# ── Rutas ─────────────────────────────────────────────────────
+from pathlib import Path
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# ── GTK Windows (WeasyPrint) ──────────────────────────────────
-if os.name == 'nt':
-    _GTK = r'C:\Program Files\GTK3-Runtime Win64\bin'
-    if os.path.exists(_GTK):
-        try:
-            os.add_dll_directory(_GTK)
-            os.environ['PATH'] = _GTK + ';' + os.environ.get('PATH', '')
-        except OSError:
-            pass
+SECRET_KEY = os.getenv('SECRET_KEY', 'change-me-in-production')
+DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
-# ── Seguridad ─────────────────────────────────────────────────
-SECRET_KEY    = config('SECRET_KEY', default='django-insecure-build-placeholder-key-not-for-production')
-DEBUG         = config('DEBUG', default=False, cast=bool)
-ENVIRONMENT   = config('ENVIRONMENT', default='production')
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='*', cast=Csv())
-CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default='', cast=Csv())
+ALLOWED_HOSTS = [
+    h.strip() for h in os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',') if h.strip()
+]
 
-# ── Apps ──────────────────────────────────────────────────────
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = 'SAMEORIGIN'
+
+if not DEBUG:
+    SECURE_SSL_REDIRECT = os.getenv('SECURE_SSL_REDIRECT', 'False') == 'True'
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -35,31 +32,29 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'storages',
-    'django_celery_beat',
-    'apps.asistencia',
+    'django.contrib.humanize',
+    'cloudinary_storage',
+    'cloudinary',
+    'gastos',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # Estáticos en producción
+    'whitenoise.middleware.WhiteNoiseMiddleware', 
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    # Middleware de empresa activa (multitenant)
-    'apps.asistencia.middleware.EmpresaActivaMiddleware',
 ]
 
-ROOT_URLCONF   = 'config.urls'
-WSGI_APPLICATION = 'config.wsgi.application'
+ROOT_URLCONF = 'core.urls'
 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS':    [BASE_DIR / 'templates'],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -67,32 +62,20 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                # Inyecta empresa activa en todos los templates
-                'apps.asistencia.context_processors.empresa_activa',
             ],
         },
     },
 ]
 
-_DATABASE_URL = config('DATABASE_URL', default='')
+WSGI_APPLICATION = 'core.wsgi.application'
 
-if _DATABASE_URL:
-    DATABASES = {
-        'default': dj_database_url.parse(
-            _DATABASE_URL,
-            conn_max_age=600,
-            conn_health_checks=True,
-        )
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME':   BASE_DIR / 'db.sqlite3',
-        }
-    }
+}
 
-# ── Contraseñas ───────────────────────────────────────────────
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
@@ -100,119 +83,75 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-# ── Internacionalización ──────────────────────────────────────
 LANGUAGE_CODE = 'es-cl'
-TIME_ZONE     = 'America/Santiago'
-USE_I18N      = True
-USE_TZ        = True
+TIME_ZONE = 'America/Santiago'
+USE_I18N = True
+USE_L10N = True
+USE_TZ = True
 
-STATIC_URL   = '/static/'
-STATIC_ROOT  = BASE_DIR / 'staticfiles'
-STATICFILES_DIRS = [BASE_DIR / 'static']
+STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-AWS_ACCESS_KEY_ID      = config('AWS_ACCESS_KEY_ID',      default='')
-AWS_SECRET_ACCESS_KEY  = config('AWS_SECRET_ACCESS_KEY',  default='')
-AWS_STORAGE_BUCKET_NAME= config('AWS_STORAGE_BUCKET_NAME',default='')
-AWS_S3_REGION_NAME     = config('AWS_S3_REGION_NAME',     default='sa-east-1')
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-if AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY and AWS_STORAGE_BUCKET_NAME:
-    DEFAULT_FILE_STORAGE  = 'storages.backends.s3boto3.S3Boto3Storage'
-    AWS_S3_FILE_OVERWRITE = False
-    AWS_DEFAULT_ACL       = 'public-read'
-    AWS_QUERYSTRING_AUTH  = False
-    AWS_S3_CUSTOM_DOMAIN  = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
-    MEDIA_URL             = f'https://{AWS_S3_CUSTOM_DOMAIN}/'
-else:
-    MEDIA_URL  = '/media/'
-    MEDIA_ROOT = BASE_DIR / 'media'
+DATA_UPLOAD_MAX_MEMORY_SIZE = 50 * 1024 * 1024
+FILE_UPLOAD_MAX_MEMORY_SIZE = 50 * 1024 * 1024
+DATA_UPLOAD_MAX_NUMBER_FILES = 200
 
-# ── Autenticación ─────────────────────────────────────────────
-LOGIN_URL           = 'login'
-LOGIN_REDIRECT_URL  = 'dashboard'
-LOGOUT_REDIRECT_URL = 'login'
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/login/'
+LOGIN_URL = '/login/'
 
-# ── Email ─────────────────────────────────────────────────────
-if ENVIRONMENT == 'development' and DEBUG:
-    # En desarrollo: imprimir emails en consola
-    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-else:
-    EMAIL_BACKEND       = 'django.core.mail.backends.smtp.EmailBackend'
-    EMAIL_HOST          = 'smtp.gmail.com'
-    EMAIL_PORT          = 587
-    EMAIL_USE_TLS       = True
-    EMAIL_HOST_USER     = config('EMAIL_HOST_USER',     default='')
-    EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
-    DEFAULT_FROM_EMAIL  = config(
-        'DEFAULT_FROM_EMAIL',
-        default=f'Perseus Control <{config("EMAIL_HOST_USER", default="")}>'
-    )
+MS_CLIENT_ID = os.getenv('MS_CLIENT_ID')
+MS_TENANT_ID = os.getenv('MS_TENANT_ID')
+MS_CLIENT_SECRET = os.getenv('MS_CLIENT_SECRET')
+MS_SITE_ID = os.getenv('MS_SITE_ID')
 
-# ── IA Gemini ─────────────────────────────────────────────────
-GEMINI_API_KEY = config('GEMINI_API_KEY', default='')
+LOGS_DIR = BASE_DIR / 'logs'
+LOGS_DIR.mkdir(exist_ok=True)
 
-# ── Seguridad en producción ───────────────────────────────────
-if not DEBUG:
-    SECURE_BROWSER_XSS_FILTER       = True
-    SECURE_CONTENT_TYPE_NOSNIFF     = True
-    X_FRAME_OPTIONS                  = 'DENY'
-    SECURE_HSTS_SECONDS              = 31536000
-    SECURE_HSTS_INCLUDE_SUBDOMAINS   = True
-    SESSION_COOKIE_SECURE            = True
-    CSRF_COOKIE_SECURE               = True
-
-# ── Misc ──────────────────────────────────────────────────────
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-# ── Celery + Redis ────────────────────────────────────────────
-REDIS_URL = config('REDIS_URL', default='redis://localhost:6379/0')
-
-CELERY_BROKER_URL       = REDIS_URL
-CELERY_RESULT_BACKEND   = REDIS_URL
-CELERY_TIMEZONE         = TIME_ZONE
-CELERY_ACCEPT_CONTENT   = ['json']
-CELERY_TASK_SERIALIZER  = 'json'
-CELERY_RESULT_SERIALIZER= 'json'
-
-# SSL para Upstash Redis (rediss://)
-if REDIS_URL.startswith('rediss://'):
-    import ssl
-    _ssl = {'ssl_cert_reqs': ssl.CERT_NONE}
-    CELERY_BROKER_USE_SSL        = _ssl
-    CELERY_REDIS_BACKEND_USE_SSL = _ssl
-CELERY_TIMEZONE         = TIME_ZONE  # America/Santiago
-CELERY_ACCEPT_CONTENT   = ['json']
-CELERY_TASK_SERIALIZER  = 'json'
-CELERY_RESULT_SERIALIZER= 'json'
-
-# Prevenir que las tareas queden colgadas
-CELERY_TASK_TIME_LIMIT       = 300   # 5 minutos máximo por tarea
-CELERY_TASK_SOFT_TIME_LIMIT  = 240
-
-# django-celery-beat guarda el schedule en la base de datos
-CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
-
-# ── Logging básico ────────────────────────────────────────────
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
-    'handlers': {
-        'console': {'class': 'logging.StreamHandler'},
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {name} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
     },
-    'root': {
-        'handlers': ['console'],
-        'level': 'WARNING',
+    'handlers': {
+        'console': {
+            'level': 'DEBUG' if DEBUG else 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+        'file': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': LOGS_DIR / 'obragastos.log',
+            'maxBytes': 5 * 1024 * 1024,  # 5 MB
+            'backupCount': 5,
+            'formatter': 'verbose',
+        },
     },
     'loggers': {
         'django': {
-            'handlers': ['console'],
-            'level': 'INFO' if DEBUG else 'WARNING',
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
             'propagate': False,
         },
-        'apps.asistencia': {
-            'handlers': ['console'],
+        'gastos': {
+            'handlers': ['console', 'file'],
             'level': 'DEBUG' if DEBUG else 'INFO',
             'propagate': False,
         },
     },
 }
+
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
