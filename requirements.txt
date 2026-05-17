@@ -33,3 +33,4 @@ msal==1.28.0
 
 # Utils
 python-dotenv==1.0.1
+python-decouple==3.8
