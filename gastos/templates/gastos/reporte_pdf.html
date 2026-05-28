@@ -3,13 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <style>
-        @page {
-            size: A4;
-            margin: 1.5cm;
-        }
+        @page { size: A4; margin: 1.5cm; }
         body {
             font-family: Helvetica, Arial, sans-serif;
-            font-size: 11px;
+            font-size: 10px;
             color: #2C2C2A;
             line-height: 1.5;
         }
@@ -18,22 +15,9 @@
             padding-bottom: 12px;
             margin-bottom: 16px;
         }
-        .brand {
-            font-size: 18px;
-            font-weight: bold;
-            color: #534AB7;
-            margin: 0 0 4px;
-        }
-        h1 {
-            font-size: 16px;
-            margin: 12px 0 4px;
-            color: #2C2C2A;
-        }
-        .meta {
-            font-size: 10px;
-            color: #5F5E5A;
-            margin: 4px 0 0;
-        }
+        .brand { font-size: 18px; font-weight: bold; color: #534AB7; margin: 0 0 4px; }
+        h1 { font-size: 15px; margin: 12px 0 4px; color: #2C2C2A; }
+        .meta { font-size: 10px; color: #5F5E5A; margin: 4px 0 0; }
         .meta strong { color: #2C2C2A; }
 
         .info-box {
@@ -43,6 +27,41 @@
             border: 1px solid #E5E5E2;
         }
 
+        /* Fila de totales resumen */
+        .totals-summary {
+            display: table;
+            width: 100%;
+            margin-bottom: 18px;
+        }
+        .totals-summary-inner {
+            background: #EEEDFE;
+            border: 1px solid #C8C5F5;
+            padding: 10px 14px;
+        }
+        .totals-row-summary {
+            display: table-row;
+        }
+        .totals-cell {
+            display: table-cell;
+            padding: 4px 16px;
+            text-align: center;
+            font-size: 11px;
+        }
+        .totals-cell .label {
+            color: #5F5E5A;
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            display: block;
+            margin-bottom: 2px;
+        }
+        .totals-cell .value {
+            font-weight: bold;
+            font-size: 13px;
+            color: #2C2C2A;
+        }
+        .totals-cell.total .value { color: #534AB7; font-size: 15px; }
+
         table {
             width: 100%;
             border-collapse: collapse;
@@ -51,27 +70,30 @@
         th {
             background-color: #534AB7;
             color: #ffffff;
-            padding: 8px 10px;
+            padding: 7px 8px;
             text-align: left;
             font-weight: bold;
-            font-size: 10px;
+            font-size: 9px;
             text-transform: uppercase;
             letter-spacing: 0.4px;
         }
         td {
             border-bottom: 1px solid #E5E5E2;
-            padding: 7px 10px;
-            font-size: 10.5px;
+            padding: 6px 8px;
+            font-size: 10px;
         }
         tr:nth-child(even) td { background-color: #FAFAF9; }
 
-        .monto { text-align: right; font-weight: bold; }
+        .monto { text-align: right; }
+        .monto-bold { text-align: right; font-weight: bold; }
+        .exento { color: #888780; font-size: 9px; }
+
         .total-row {
-            background-color: #EEEDFE;
+            background-color: #EEEDFE !important;
             font-weight: bold;
-            font-size: 11.5px;
+            font-size: 11px;
         }
-        .total-row td { border-top: 2px solid #534AB7; padding: 10px; }
+        .total-row td { border-top: 2px solid #534AB7; padding: 8px; }
 
         .footer {
             margin-top: 24px;
@@ -86,7 +108,7 @@
 <body>
 
 <div class="header">
-    <p class="brand">ObraGastos</p>
+    <p class="brand">SpendBox</p>
     <h1>Reporte de Gastos</h1>
     <p class="meta"><strong>Empresa:</strong> {{ empresa }}</p>
     <p class="meta"><strong>Generado el:</strong> {% now "d/m/Y H:i" %}</p>
@@ -98,9 +120,25 @@
     {% else %}
         <strong>Período:</strong> Todo el historial
     {% endif %}
-    <br>
-    <strong>Cantidad de registros:</strong> {{ gastos|length }}
+    &nbsp;&nbsp;·&nbsp;&nbsp;
+    <strong>Registros:</strong> {{ gastos|length }}
 </div>
+
+<!-- Resumen de totales -->
+<table style="margin-bottom: 16px; border-collapse: collapse; width: 60%; margin-left: auto;">
+    <tr>
+        <td style="padding: 8px 12px; background: #FAFAF9; border: 1px solid #E5E5E2; font-size: 11px; color: #5F5E5A;">Monto Neto Total</td>
+        <td style="padding: 8px 12px; background: #FAFAF9; border: 1px solid #E5E5E2; font-size: 12px; font-weight: bold; text-align: right;">${{ total_neto }}</td>
+    </tr>
+    <tr>
+        <td style="padding: 8px 12px; border: 1px solid #E5E5E2; font-size: 11px; color: #5F5E5A;">IVA Total (19%)</td>
+        <td style="padding: 8px 12px; border: 1px solid #E5E5E2; font-size: 12px; font-weight: bold; text-align: right;">${{ total_iva }}</td>
+    </tr>
+    <tr>
+        <td style="padding: 8px 12px; background: #EEEDFE; border: 1px solid #C8C5F5; font-size: 12px; font-weight: bold; color: #534AB7;">TOTAL GENERAL</td>
+        <td style="padding: 8px 12px; background: #EEEDFE; border: 1px solid #C8C5F5; font-size: 14px; font-weight: bold; color: #534AB7; text-align: right;">${{ total }}</td>
+    </tr>
+</table>
 
 <table>
     <thead>
@@ -110,7 +148,9 @@
             <th>Folio</th>
             <th>Categoría</th>
             <th>Proyecto</th>
-            <th class="monto">Monto</th>
+            <th class="monto">Neto</th>
+            <th class="monto">IVA</th>
+            <th class="monto-bold">Total</th>
         </tr>
     </thead>
     <tbody>
@@ -119,20 +159,31 @@
             <td>{{ gasto.fecha_emision|date:"d/m/Y"|default:"--" }}</td>
             <td>{{ gasto.rut_emisor|default:"--" }}</td>
             <td>{{ gasto.folio|default:"--" }}</td>
-            <td>{{ gasto.get_categoria_display|default:"--" }}</td>
+            <td>
+                {{ gasto.get_categoria_display|default:"--" }}
+                {% if not gasto.tiene_iva %}<br><span class="exento">Exento IVA</span>{% endif %}
+            </td>
             <td>{{ gasto.obra.nombre|default:"--" }}</td>
-            <td class="monto">${{ gasto.monto_total|stringformat:"d" }}</td>
+            <td class="monto">
+                {% if gasto.monto_neto %}${{ gasto.monto_neto }}{% else %}--{% endif %}
+            </td>
+            <td class="monto">
+                {% if gasto.iva %}${{ gasto.iva }}{% else %}--{% endif %}
+            </td>
+            <td class="monto-bold">${{ gasto.monto_total }}</td>
         </tr>
         {% endfor %}
         <tr class="total-row">
-            <td colspan="5" style="text-align: right;">TOTAL GENERAL</td>
-            <td class="monto">${{ total }}</td>
+            <td colspan="5" style="text-align: right;">TOTALES</td>
+            <td class="monto">${{ total_neto }}</td>
+            <td class="monto">${{ total_iva }}</td>
+            <td class="monto-bold">${{ total }}</td>
         </tr>
     </tbody>
 </table>
 
 <div class="footer">
-    Reporte generado automáticamente por ObraGastos · {% now "Y" %}
+    Reporte generado automáticamente por SpendBox · {% now "Y" %}
 </div>
 
 </body>

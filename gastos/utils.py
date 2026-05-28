@@ -81,19 +81,16 @@ def limpiar_con_filtro_verde(pil_image):
 
 
 def _preprocesar_para_ocr(pil_image):
-   
     img_np = np.array(pil_image.convert('RGB'))
     gris = cv2.cvtColor(img_np, cv2.COLOR_RGB2GRAY)
     blur = cv2.GaussianBlur(gris, (21, 21), 0)
     sin_sombra = cv2.divide(gris, blur, scale=255)
-
     binarizada = cv2.adaptiveThreshold(
         sin_sombra, 255,
         cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
         cv2.THRESH_BINARY,
         blockSize=31, C=10
     )
-
     resultado = cv2.cvtColor(binarizada, cv2.COLOR_GRAY2RGB)
     return Image.fromarray(resultado)
 
@@ -123,7 +120,7 @@ def _intentar_leer_barcode(img_pil):
         ImageEnhance.Contrast(img_pil).enhance(2.0).convert('L'),
         gris.resize((gris.width * 2, gris.height * 2), Image.LANCZOS),
         limpiar_con_filtro_verde(img_pil),
-        ImageOps.invert(gris),  # invertido — útil en PDFs digitales oscuros
+        ImageOps.invert(gris),
     ]
     for img_trabajo in variantes:
         for angulo in [0, 90, 180, 270]:
@@ -142,7 +139,19 @@ def _intentar_leer_barcode(img_pil):
 
 
 def _parsear_xml_ted(texto_codigo):
+    """
+    Parsea el XML TED del DTE chileno.
+    Extrae rut_emisor, fecha_emision, monto_total, monto_neto, iva y folio
+    desde el bloque <DD> — el único lugar correcto según la norma SII.
 
+    Tags relevantes del TED:
+      <RE>   RUT emisor
+      <F>    Folio
+      <FE>   Fecha emisión (YYYY-MM-DD)
+      <MNT>  Monto total (con IVA)
+      <MNE>  Monto neto (sin IVA)  — presente en facturas afectas
+      <IVA>  Monto IVA             — presente en facturas afectas
+    """
     match = re.search(r'<TED[\s\S]*?</TED>', texto_codigo, re.DOTALL)
     xml = match.group(0) if match else texto_codigo
 
@@ -154,22 +163,36 @@ def _parsear_xml_ted(texto_codigo):
             raise ValueError("Sin bloque DD")
 
         def get_tag(tag):
-            """Busca SOLO dentro de <DD>, case-sensitive."""
             node = dd.find(tag)
             return node.get_text(strip=True) if node else None
+
+        mnt   = get_tag("MNT")
+        mne   = get_tag("MNE")
+        iva   = get_tag("IVA")
+
+        # Si no hay MNE pero sí MNT e IVA, calcular neto
+        if mnt and iva and not mne:
+            try:
+                mne = str(int(mnt) - int(iva))
+            except Exception:
+                pass
+        # Si no hay IVA pero sí MNT y MNE, calcular IVA
+        if mnt and mne and not iva:
+            try:
+                iva = str(int(mnt) - int(mne))
+            except Exception:
+                pass
 
         return {
             "rut_emisor":    get_tag("RE"),
             "fecha_emision": get_tag("FE"),
-            "monto_total":   get_tag("MNT"),
+            "monto_total":   mnt,
+            "monto_neto":    mne,
+            "iva":           iva,
             "folio":         get_tag("F"),
         }
 
     except Exception:
-        def regex_tag(tag):
-            m = re.search(rf'<{tag}>\s*([^<]+?)\s*</{tag}>', xml, re.IGNORECASE)
-            return m.group(1).strip() if m else None
-
         dd_match = re.search(r'<DD>([\s\S]*?)</DD>', xml, re.IGNORECASE)
         dd_text = dd_match.group(1) if dd_match else xml
 
@@ -177,12 +200,72 @@ def _parsear_xml_ted(texto_codigo):
             m = re.search(rf'<{tag}>\s*([^<]+?)\s*</{tag}>', dd_text, re.IGNORECASE)
             return m.group(1).strip() if m else None
 
+        mnt = regex_dd("MNT")
+        mne = regex_dd("MNE")
+        iva = regex_dd("IVA")
+
+        if mnt and iva and not mne:
+            try:
+                mne = str(int(mnt) - int(iva))
+            except Exception:
+                pass
+        if mnt and mne and not iva:
+            try:
+                iva = str(int(mnt) - int(mne))
+            except Exception:
+                pass
+
         return {
             "rut_emisor":    regex_dd("RE"),
             "fecha_emision": regex_dd("FE"),
-            "monto_total":   regex_dd("MNT"),
+            "monto_total":   mnt,
+            "monto_neto":    mne,
+            "iva":           iva,
             "folio":         regex_dd("F"),
         }
+
+
+def _extraer_monto_neto_iva(texto_completo, palabras_ocr):
+    """
+    Extrae monto neto e IVA desde texto OCR o texto embebido PDF.
+    Busca palabras clave: NETO, MONTO NETO, IVA, IVA 19%, etc.
+    Retorna (monto_neto, iva) o (None, None) si no encuentra.
+    """
+    palabras_clave_neto = [
+        'MONTONETO', 'MONTO NETO', 'NETO', 'SUBTOTAL',
+        'AFECTO', 'BASE IMPONIBLE', 'BASEIMPONIBLE',
+    ]
+    palabras_clave_iva = [
+        'IVA19', 'IVA 19', 'IVA19%', 'IVA', 'IMPUESTO',
+        'IMPUESTOALVALOR', 'I.V.A',
+    ]
+
+    def buscar_monto_por_claves(claves):
+        for i, palabra in enumerate(palabras_ocr):
+            p_norm = re.sub(r'[^\w]', '', palabra).upper()
+            if not any(c.replace(' ', '') in p_norm for c in claves):
+                continue
+            for offset in range(1, 6):
+                if i + offset >= len(palabras_ocr):
+                    break
+                candidato = palabras_ocr[i + offset]
+                match = re.search(r'(\d{1,3}(?:[.\s]\d{3})+|\d{4,9})', candidato)
+                if match:
+                    try:
+                        val = int(match.group(1).replace('.', '').replace(' ', ''))
+                        if 100 < val < 1_000_000_000 and val not in (2024, 2025, 2026, 2027, 2028):
+                            return val
+                    except ValueError:
+                        continue
+        return None
+
+    monto_neto = buscar_monto_por_claves(palabras_clave_neto)
+    iva        = buscar_monto_por_claves(palabras_clave_iva)
+
+    # Validación cruzada: si tenemos los tres, verificar coherencia
+    # (se hace en procesar_boleta_chilena con monto_total)
+
+    return monto_neto, iva
 
 
 def _extraer_monto_total(texto_completo, palabras_ocr, rut_emisor=None):
@@ -201,7 +284,6 @@ def _extraer_monto_total(texto_completo, palabras_ocr, rut_emisor=None):
         p_norm = re.sub(r'[^\w]', '', palabra).upper()
         if not any(clave.replace(' ', '') in p_norm for clave in palabras_clave_total):
             continue
-
         for offset in range(1, 6):
             if i + offset >= len(palabras_ocr):
                 break
@@ -220,7 +302,7 @@ def _extraer_monto_total(texto_completo, palabras_ocr, rut_emisor=None):
 
     if candidatos_por_clave:
         return max(candidatos_por_clave)
-    
+
     posibles = []
     matches = re.findall(r'\b(\d{1,3}(?:\.\d{3})+)\b', texto_completo)
     for m in matches:
@@ -246,22 +328,17 @@ def _extraer_folio(palabras_ocr, texto_completo):
         p_limpia = re.sub(r'[^\w]', '', palabra).upper()
         if not any(clave in p_limpia for clave in claves_folio):
             continue
-
         for offset in range(1, 5):
             if i + offset >= len(palabras_ocr):
                 break
             candidato_raw = palabras_ocr[i + offset].upper()
-
             if "K" in candidato_raw or "-" in candidato_raw:
                 continue
-
             if es_rut_valido(candidato_raw):
                 continue
-
             candidato_num = re.sub(r'[^\d]', '', candidato_raw)
             if not candidato_num:
                 continue
-
             try:
                 val = int(candidato_num)
                 if val in (2024, 2025, 2026, 2027, 2028) or val == 0:
@@ -283,7 +360,6 @@ def _extraer_folio(palabras_ocr, texto_completo):
 
 
 def _extraer_fecha(texto_completo):
-    """Extrae fecha de emisión con año dinámico (no hardcodeado)."""
     anio_actual = datetime.now().year
     anios_validos = [str(y) for y in range(anio_actual - 3, anio_actual + 2)]
     patron_anios = '|'.join(anios_validos)
@@ -317,6 +393,50 @@ def _extraer_fecha(texto_completo):
     return None
 
 
+def _completar_neto_iva(datos):
+    """
+    Si tenemos dos de los tres valores (total, neto, iva), calcula el tercero.
+    También detecta si el documento es exento de IVA.
+    """
+    total = datos.get("monto_total")
+    neto  = datos.get("monto_neto")
+    iva   = datos.get("iva")
+
+    try:
+        total = int(total) if total else None
+        neto  = int(neto)  if neto  else None
+        iva   = int(iva)   if iva   else None
+    except (ValueError, TypeError):
+        return datos
+
+    # Calcular el faltante
+    if total and neto and not iva:
+        iva = total - neto
+    elif total and iva and not neto:
+        neto = total - iva
+    elif neto and iva and not total:
+        total = neto + iva
+
+    # Verificar coherencia: neto + iva ≈ total (tolerancia 5%)
+    if total and neto and iva:
+        if abs((neto + iva) - total) > total * 0.05:
+            # Incoherente — descartar neto e IVA, conservar solo total
+            neto = None
+            iva  = None
+
+    # Detectar exento: si iva == 0 o neto == total
+    tiene_iva = True
+    if iva == 0 or (neto and total and neto == total):
+        tiene_iva = False
+        iva = 0
+
+    datos["monto_total"] = str(total) if total else datos.get("monto_total")
+    datos["monto_neto"]  = str(neto)  if neto  else None
+    datos["iva"]         = str(iva)   if iva is not None else None
+    datos["tiene_iva"]   = tiene_iva
+    return datos
+
+
 def procesar_boleta_chilena(ruta_archivo):
 
     if not os.path.exists(ruta_archivo):
@@ -324,11 +444,14 @@ def procesar_boleta_chilena(ruta_archivo):
 
     logger.info(f"Procesando {ruta_archivo}")
     datos = {
-        "rut_emisor": None,
+        "rut_emisor":    None,
         "fecha_emision": None,
-        "monto_total": None,
-        "folio": None,
-        "exito": False,
+        "monto_total":   None,
+        "monto_neto":    None,
+        "iva":           None,
+        "tiene_iva":     True,
+        "folio":         None,
+        "exito":         False,
     }
 
     paginas = []
@@ -342,13 +465,14 @@ def procesar_boleta_chilena(ruta_archivo):
     except Exception as e:
         return {"error": f"Error abriendo archivo: {e}"}
 
+    # 1. PDF417 barcode
     for img_pil in paginas:
         texto_codigo = _intentar_leer_barcode(img_pil)
         if not texto_codigo:
             logger.info(f"Barcode NO encontrado en página {paginas.index(img_pil)+1}, imagen {img_pil.size}")
             continue
 
-        logger.info(f"XML CRUDO DEL BARCODE:\n{texto_codigo}") 
+        logger.info(f"XML CRUDO DEL BARCODE:\n{texto_codigo}")
 
         try:
             xml_data = _parsear_xml_ted(texto_codigo)
@@ -359,6 +483,8 @@ def procesar_boleta_chilena(ruta_archivo):
             elif datos["rut_emisor"]:
                 datos["rut_emisor"] = formatear_rut(datos["rut_emisor"])
 
+            datos = _completar_neto_iva(datos)
+
             if datos["rut_emisor"]:
                 datos["exito"] = True
                 datos["fuente"] = "barcode"
@@ -367,12 +493,13 @@ def procesar_boleta_chilena(ruta_archivo):
         except Exception as e:
             logger.warning(f"Error parseando XML: {e}")
 
+    # 2. Texto embebido PDF
     if ruta_archivo.lower().endswith('.pdf'):
         try:
             doc = fitz.open(ruta_archivo)
             texto_pdf = " ".join(page.get_text() for page in doc).upper()
             doc.close()
-            if len(texto_pdf.strip()) > 50:  
+            if len(texto_pdf.strip()) > 50:
                 logger.info("Extrayendo texto embebido del PDF (sin OCR)...")
                 resultados = texto_pdf.split()
 
@@ -394,8 +521,18 @@ def procesar_boleta_chilena(ruta_archivo):
                 if not datos["monto_total"]:
                     datos["monto_total"] = _extraer_monto_total(texto_pdf, resultados, datos.get("rut_emisor"))
 
+                # Extraer neto e IVA desde texto embebido
+                if not datos["monto_neto"] or not datos["iva"]:
+                    neto_ocr, iva_ocr = _extraer_monto_neto_iva(texto_pdf, resultados)
+                    if neto_ocr and not datos["monto_neto"]:
+                        datos["monto_neto"] = str(neto_ocr)
+                    if iva_ocr and not datos["iva"]:
+                        datos["iva"] = str(iva_ocr)
+
                 if not datos["fecha_emision"]:
                     datos["fecha_emision"] = _extraer_fecha(texto_pdf)
+
+                datos = _completar_neto_iva(datos)
 
                 if datos["rut_emisor"] or datos["monto_total"]:
                     datos["exito"] = True
@@ -405,6 +542,7 @@ def procesar_boleta_chilena(ruta_archivo):
         except Exception as e:
             logger.warning(f"Error extrayendo texto del PDF: {e}")
 
+    # 3. Tesseract OCR
     logger.info("Iniciando Tesseract como fallback...")
     try:
         pytesseract = _get_ocr_reader()
@@ -428,14 +566,23 @@ def procesar_boleta_chilena(ruta_archivo):
         if not datos["folio"]:
             datos["folio"] = _extraer_folio(resultados, texto_completo)
 
-        # C. MONTO TOTAL (con palabras clave)
         if not datos["monto_total"]:
             datos["monto_total"] = _extraer_monto_total(
                 texto_completo, resultados, datos.get("rut_emisor")
             )
+
+        # Extraer neto e IVA desde OCR
+        if not datos["monto_neto"] or not datos["iva"]:
+            neto_ocr, iva_ocr = _extraer_monto_neto_iva(texto_completo, resultados)
+            if neto_ocr and not datos["monto_neto"]:
+                datos["monto_neto"] = str(neto_ocr)
+            if iva_ocr and not datos["iva"]:
+                datos["iva"] = str(iva_ocr)
+
         if not datos["fecha_emision"]:
             datos["fecha_emision"] = _extraer_fecha(texto_completo)
 
+        datos = _completar_neto_iva(datos)
         datos["fuente"] = "ocr"
 
     except Exception as e:

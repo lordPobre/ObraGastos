@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load humanize %}
 
-{% block title %}Historial · ObraGastos{% endblock %}
+{% block title %}Historial · SpendBox{% endblock %}
 
 {% block extra_head %}
 <style>
@@ -107,14 +107,8 @@
         gap: 6px;
         transition: var(--transition);
     }
-    .btn-danger-modern:hover {
-        background: var(--color-danger);
-        color: #fff;
-    }
-    .btn-danger-modern:disabled {
-        opacity: 0.4;
-        cursor: not-allowed;
-    }
+    .btn-danger-modern:hover { background: var(--color-danger); color: #fff; }
+    .btn-danger-modern:disabled { opacity: 0.4; cursor: not-allowed; }
 
     .table-modern {
         width: 100%;
@@ -131,6 +125,7 @@
         letter-spacing: 0.4px;
         border-bottom: 1px solid var(--color-border);
         background: var(--color-bg);
+        white-space: nowrap;
     }
     .table-modern td {
         padding: 12px;
@@ -139,7 +134,17 @@
     }
     .table-modern tbody tr:hover { background: #FAFAF9; }
     .table-modern .col-amount { text-align: right; font-weight: 600; }
+    .table-modern .col-neto { text-align: right; color: var(--color-text-secondary); font-size: 12px; }
+    .table-modern .col-iva  { text-align: right; color: var(--color-text-tertiary); font-size: 12px; }
     .table-modern .col-actions { text-align: right; white-space: nowrap; }
+
+    /* fila de totales */
+    .table-modern .totals-row td {
+        background: var(--color-bg);
+        font-weight: 600;
+        border-top: 2px solid var(--color-border);
+        font-size: 12.5px;
+    }
 
     .badge-folio {
         display: inline-block;
@@ -156,8 +161,7 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        width: 30px;
-        height: 30px;
+        width: 30px; height: 30px;
         border-radius: var(--radius-md);
         border: 1px solid var(--color-border);
         background: var(--color-surface);
@@ -167,31 +171,16 @@
         transition: var(--transition);
         font-size: 13px;
     }
-    .btn-icon:hover {
-        background: var(--color-primary-light);
-        color: var(--color-primary-hover);
-        border-color: var(--color-primary-light);
-    }
-    .btn-icon.danger:hover {
-        background: var(--color-danger-light);
-        color: var(--color-danger);
-        border-color: var(--color-danger-light);
-    }
+    .btn-icon:hover { background: var(--color-primary-light); color: var(--color-primary-hover); border-color: var(--color-primary-light); }
+    .btn-icon.danger:hover { background: var(--color-danger-light); color: var(--color-danger); border-color: var(--color-danger-light); }
 
-    .empty-state {
-        padding: 60px 20px;
-        text-align: center;
-        color: var(--color-text-tertiary);
-    }
+    .empty-state { padding: 60px 20px; text-align: center; color: var(--color-text-tertiary); }
     .empty-state i { font-size: 40px; opacity: 0.3; display: block; margin-bottom: 8px; }
 
-    .dropdown-export {
-        position: relative;
-    }
+    .dropdown-export { position: relative; }
     .dropdown-menu-modern {
         position: absolute;
-        right: 0;
-        top: calc(100% + 4px);
+        right: 0; top: calc(100% + 4px);
         background: var(--color-surface);
         border: 1px solid var(--color-border);
         border-radius: var(--radius-md);
@@ -213,10 +202,19 @@
         border-radius: var(--radius-sm);
         cursor: pointer;
     }
-    .dropdown-item-modern:hover {
-        background: var(--color-bg);
-        color: var(--color-text-primary);
+    .dropdown-item-modern:hover { background: var(--color-bg); }
+
+    /* tag IVA afecto / exento */
+    .tag-iva {
+        display: inline-block;
+        font-size: 10px;
+        font-weight: 600;
+        padding: 1px 6px;
+        border-radius: 4px;
+        margin-left: 4px;
     }
+    .tag-afecto { background: #E6F1FB; color: #0C447C; }
+    .tag-exento { background: var(--color-bg); color: var(--color-text-tertiary); }
 </style>
 {% endblock %}
 
@@ -257,7 +255,6 @@
 
 <div class="filters-panel">
     <form method="get" class="filters-grid">
-
         <div class="field-group">
             <label class="field-label" for="searchQ">Buscar</label>
             <div class="search-box">
@@ -266,17 +263,14 @@
                        class="input-modern" placeholder="RUT, folio o descripción">
             </div>
         </div>
-
         <div class="field-group">
             <label class="field-label" for="fechaIni">Desde</label>
             <input type="date" id="fechaIni" name="fecha_inicio" value="{{ fecha_inicio|default:'' }}" class="input-modern">
         </div>
-
         <div class="field-group">
             <label class="field-label" for="fechaFin">Hasta</label>
             <input type="date" id="fechaFin" name="fecha_fin" value="{{ fecha_fin|default:'' }}" class="input-modern">
         </div>
-
         <div class="field-group">
             <label class="field-label" for="obraSel">Proyecto</label>
             <select id="obraSel" name="obra_id" class="input-modern">
@@ -288,7 +282,6 @@
                 {% endfor %}
             </select>
         </div>
-
         <div class="field-group">
             <label class="field-label" for="catSel">Categoría</label>
             <select id="catSel" name="categoria" class="input-modern">
@@ -300,13 +293,11 @@
                 {% endfor %}
             </select>
         </div>
-
         <div class="field-group">
             <button type="submit" class="btn-primary-modern" style="height: 38px;">
                 <i class="bi bi-funnel"></i> Filtrar
             </button>
         </div>
-
     </form>
 </div>
 
@@ -324,7 +315,7 @@
                 {% endif %}
             </div>
             <button type="submit" class="btn-danger-modern" id="btnEliminar" disabled
-                    onclick="return confirm('¿Estás seguro de eliminar los gastos seleccionados? Esta acción no se puede deshacer.')">
+                    onclick="return confirm('¿Eliminar los gastos seleccionados? Esta acción no se puede deshacer.')">
                 <i class="bi bi-trash3"></i> Eliminar selección (<span id="countSel">0</span>)
             </button>
         </div>
@@ -340,7 +331,9 @@
                         <th>Proveedor</th>
                         <th>Folio</th>
                         <th>Categoría</th>
-                        <th class="col-amount">Monto</th>
+                        <th class="col-neto">Neto</th>
+                        <th class="col-iva">IVA</th>
+                        <th class="col-amount">Total</th>
                         <th class="col-actions" style="padding-right: 16px;">Acciones</th>
                     </tr>
                 </thead>
@@ -366,6 +359,25 @@
                             <span style="font-size: 12px; color: var(--color-text-secondary);">
                                 {{ gasto.get_categoria_display|default:"—" }}
                             </span>
+                            {% if gasto.tiene_iva %}
+                                <span class="tag-iva tag-afecto">IVA</span>
+                            {% else %}
+                                <span class="tag-iva tag-exento">Exento</span>
+                            {% endif %}
+                        </td>
+                        <td class="col-neto">
+                            {% if gasto.monto_neto %}
+                                ${{ gasto.monto_neto|intcomma }}
+                            {% else %}
+                                <span style="color: var(--color-text-tertiary);">—</span>
+                            {% endif %}
+                        </td>
+                        <td class="col-iva">
+                            {% if gasto.iva %}
+                                ${{ gasto.iva|intcomma }}
+                            {% else %}
+                                <span style="color: var(--color-text-tertiary);">—</span>
+                            {% endif %}
                         </td>
                         <td class="col-amount">${{ gasto.monto_total|intcomma }}</td>
                         <td class="col-actions" style="padding-right: 16px;">
@@ -384,7 +396,7 @@
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="7">
+                        <td colspan="9">
                             <div class="empty-state">
                                 <i class="bi bi-inbox"></i>
                                 <h6 style="font-weight: 600; margin-bottom: 4px;">No hay registros</h6>
@@ -394,6 +406,17 @@
                     </tr>
                     {% endfor %}
                 </tbody>
+                {% if gastos %}
+                <tfoot>
+                    <tr class="totals-row">
+                        <td colspan="5" style="text-align: right; padding-right: 16px; color: var(--color-text-secondary);">Totales</td>
+                        <td class="col-neto">${{ total_neto|intcomma }}</td>
+                        <td class="col-iva">${{ total_iva|intcomma }}</td>
+                        <td class="col-amount">${{ total_filtrado|intcomma }}</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+                {% endif %}
             </table>
         </div>
     </div>

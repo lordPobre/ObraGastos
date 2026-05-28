@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load humanize %}
 
-{% block title %}Resumen · ObraGastos{% endblock %}
+{% block title %}Resumen · SpendBox{% endblock %}
 
 {% block extra_head %}
 <style>
@@ -13,7 +13,6 @@
         margin-bottom: 24px;
         flex-wrap: wrap;
     }
-
     .obra-selector {
         display: flex;
         align-items: center;
@@ -35,8 +34,61 @@
         outline: none;
         min-width: 160px;
     }
+    /* === ALERTAS PRESUPUESTO === */
+    .alerta-presupuesto {
+        border-radius: var(--radius-lg);
+        padding: 14px 16px;
+        margin-bottom: 16px;
+        border: 1px solid;
+    }
+    .alerta-presupuesto-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        margin-bottom: 10px;
+    }
+    .alerta-presupuesto.excedido {
+        background: var(--color-danger-light);
+        border-color: #E8AAAA;
+    }
+    .alerta-presupuesto.excedido .alerta-presupuesto-header {
+        color: var(--color-danger);
+    }
+    .alerta-presupuesto.advertencia {
+        background: var(--color-warning-light);
+        border-color: #EDD9A3;
+    }
+    .alerta-presupuesto.advertencia .alerta-presupuesto-header {
+        color: var(--color-warning);
+    }
+    .alerta-items {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .alerta-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 500;
+    }
+    .alerta-chip.excedido {
+        background: #F8D7DA;
+        color: #791F1F;
+        border: 1px solid #F1B0B7;
+    }
+    .alerta-chip.advertencia {
+        background: #FFF0CC;
+        color: #784A0E;
+        border: 1px solid #F5D78E;
+    }
+    .alerta-chip strong { font-weight: 700; }
 
-    /* === KPI CARDS === */
     .kpi-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -49,175 +101,77 @@
         border-radius: var(--radius-lg);
         padding: 16px;
     }
-    .kpi-label {
-        font-size: 11.5px;
-        color: var(--color-text-secondary);
-        margin-bottom: 6px;
-        font-weight: 500;
-    }
-    .kpi-value {
-        font-size: 22px;
-        font-weight: 600;
-        color: var(--color-text-primary);
-        letter-spacing: -0.5px;
-        line-height: 1.2;
-    }
-    .kpi-meta {
-        font-size: 11.5px;
-        color: var(--color-text-tertiary);
-        margin-top: 6px;
-    }
+    .kpi-label { font-size: 11.5px; color: var(--color-text-secondary); margin-bottom: 6px; font-weight: 500; }
+    .kpi-value { font-size: 22px; font-weight: 600; color: var(--color-text-primary); letter-spacing: -0.5px; line-height: 1.2; }
+    .kpi-meta { font-size: 11.5px; color: var(--color-text-tertiary); margin-top: 6px; }
     .kpi-meta.success { color: var(--color-success); }
     .kpi-meta.danger { color: var(--color-danger); }
+    .kpi-progress { height: 4px; background: var(--color-bg); border-radius: 2px; overflow: hidden; margin-top: 8px; }
+    .kpi-progress-bar { height: 100%; transition: width 1s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 2px; }
+    .main-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; margin-bottom: 16px; }
+    @media (max-width: 768px) { .main-grid { grid-template-columns: 1fr; } }
+    .panel { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 18px; }
+    .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .panel-title { font-size: 14px; font-weight: 600; color: var(--color-text-primary); margin: 0; }
 
-    .kpi-progress {
-        height: 4px;
+    /* Botones granularidad */
+    .granularity-btns {
+        display: flex;
+        gap: 3px;
         background: var(--color-bg);
-        border-radius: 2px;
-        overflow: hidden;
-        margin-top: 8px;
+        border-radius: var(--radius-md);
+        padding: 3px;
     }
-    .kpi-progress-bar {
-        height: 100%;
-        transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
-        border-radius: 2px;
-    }
-
-    /* === GRID PRINCIPAL === */
-    .main-grid {
-        display: grid;
-        grid-template-columns: 1.4fr 1fr;
-        gap: 16px;
-        margin-bottom: 16px;
-    }
-    @media (max-width: 768px) {
-        .main-grid { grid-template-columns: 1fr; }
-    }
-
-    .panel {
-        background: var(--color-surface);
-        border: 1px solid var(--color-border);
-        border-radius: var(--radius-lg);
-        padding: 18px;
-    }
-    .panel-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 16px;
-    }
-    .panel-title {
-        font-size: 14px;
-        font-weight: 600;
-        color: var(--color-text-primary);
-        margin: 0;
-    }
-
-    /* === TRACKERS === */
-    .tracker {
-        margin-bottom: 14px;
-    }
-    .tracker:last-child { margin-bottom: 0; }
-    .tracker-label-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: baseline;
-        font-size: 12px;
-        margin-bottom: 5px;
-    }
-    .tracker-label {
+    .gran-btn {
+        padding: 4px 12px;
+        border-radius: 6px;
+        border: none;
+        background: transparent;
+        font-size: 11.5px;
+        font-weight: 500;
         color: var(--color-text-secondary);
-        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        font-family: inherit;
     }
-    .tracker-value {
+    .gran-btn:hover { color: var(--color-text-primary); }
+    .gran-btn.active {
+        background: var(--color-surface);
+        color: var(--color-primary);
         font-weight: 600;
-        color: var(--color-text-primary);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
     }
-    .tracker-value .total {
-        color: var(--color-text-tertiary);
-        font-weight: 500;
-    }
-    .tracker-bar {
-        height: 5px;
-        background: var(--color-bg);
-        border-radius: 3px;
-        overflow: hidden;
-    }
-    .tracker-fill {
-        height: 100%;
-        border-radius: 3px;
-        transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
-    }
+
+    .tracker { margin-bottom: 14px; }
+    .tracker:last-child { margin-bottom: 0; }
+    .tracker-label-row { display: flex; justify-content: space-between; align-items: baseline; font-size: 12px; margin-bottom: 5px; }
+    .tracker-label { color: var(--color-text-secondary); font-weight: 500; }
+    .tracker-value { font-weight: 600; color: var(--color-text-primary); }
+    .tracker-value .total { color: var(--color-text-tertiary); font-weight: 500; }
+    .tracker-bar { height: 5px; background: var(--color-bg); border-radius: 3px; overflow: hidden; }
+    .tracker-fill { height: 100%; border-radius: 3px; transition: width 1s cubic-bezier(0.4, 0, 0.2, 1); }
     .tracker-fill.ok { background: var(--color-success); }
     .tracker-fill.warn { background: var(--color-warning); }
     .tracker-fill.over { background: var(--color-danger); }
-
-    /* === EMPTY STATE === */
-    .empty-state {
-        text-align: center;
-        padding: 40px 20px;
-        color: var(--color-text-tertiary);
-    }
-    .empty-state i {
-        font-size: 32px;
-        opacity: 0.4;
-        display: block;
-        margin-bottom: 8px;
-    }
+    .empty-state { text-align: center; padding: 40px 20px; color: var(--color-text-tertiary); }
+    .empty-state i { font-size: 32px; opacity: 0.4; display: block; margin-bottom: 8px; }
     .empty-state p { margin: 0; font-size: 13px; }
-
-    /* === TABLA RECIENTES === */
-    .table-recent {
-        width: 100%;
-        font-size: 13px;
-    }
-    .table-recent th {
-        text-align: left;
-        padding: 10px 8px;
-        font-size: 11px;
-        text-transform: uppercase;
-        font-weight: 600;
-        color: var(--color-text-tertiary);
-        letter-spacing: 0.4px;
-        border-bottom: 1px solid var(--color-border);
-    }
-    .table-recent td {
-        padding: 12px 8px;
-        border-bottom: 1px solid var(--color-bg);
-        vertical-align: middle;
-    }
-    .table-recent tbody tr {
-        cursor: pointer;
-        transition: var(--transition);
-    }
+    .table-recent { width: 100%; font-size: 13px; }
+    .table-recent th { text-align: left; padding: 10px 8px; font-size: 11px; text-transform: uppercase; font-weight: 600; color: var(--color-text-tertiary); letter-spacing: 0.4px; border-bottom: 1px solid var(--color-border); }
+    .table-recent td { padding: 12px 8px; border-bottom: 1px solid var(--color-bg); vertical-align: middle; }
+    .table-recent tbody tr { cursor: pointer; transition: var(--transition); }
     .table-recent tbody tr:hover { background: var(--color-bg); }
     .table-recent .provider { font-weight: 600; color: var(--color-text-primary); }
     .table-recent .meta { font-size: 11.5px; color: var(--color-text-tertiary); margin-top: 2px; }
     .table-recent .amount { text-align: right; font-weight: 600; }
-
-    .badge-cat {
-        display: inline-flex;
-        align-items: center;
-        padding: 3px 8px;
-        border-radius: var(--radius-sm);
-        font-size: 11px;
-        font-weight: 500;
-    }
+    .badge-cat { display: inline-flex; align-items: center; padding: 3px 8px; border-radius: var(--radius-sm); font-size: 11px; font-weight: 500; }
     .badge-materiales { background: #E1F5EE; color: #085041; }
-    .badge-mano_obra { background: #FAEEDA; color: #854F0B; }
+    .badge-mano_obra, .badge-mo_contrata, .badge-mo_subcontrata, .badge-mo_jornal, .badge-mo_trato { background: #FAEEDA; color: #854F0B; }
     .badge-maquinaria { background: #E6F1FB; color: #0C447C; }
     .badge-combustible { background: #FCEBEB; color: #791F1F; }
     .badge-alimentacion { background: #E1F5EE; color: #085041; }
     .badge-default { background: var(--color-primary-light); color: var(--color-primary-hover); }
-
-    .estado-icon {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 24px; height: 24px;
-        border-radius: 50%;
-        font-size: 12px;
-    }
+    .estado-icon { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%; font-size: 12px; }
     .estado-ok { background: var(--color-success-light); color: var(--color-success); }
     .estado-warn { background: var(--color-warning-light); color: var(--color-warning); }
 </style>
@@ -252,18 +206,61 @@
 
 <div class="kpi-grid">
 
+{% if alertas_presupuesto %}
+
+    {# Bloque excedidos #}
+    {% for alerta in alertas_presupuesto %}{% if alerta.tipo == 'excedido' %}{% if forloop.first %}
+    <div class="alerta-presupuesto excedido" style="grid-column: 1 / -1;">
+        <div class="alerta-presupuesto-header">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            Presupuesto excedido — revisar urgente
+            {% if obra_seleccionada %}<span style="font-weight:400; margin-left:4px;">· proyecto seleccionado</span>{% endif %}
+        </div>
+        <div class="alerta-items">
+    {% endif %}
+            <span class="alerta-chip excedido">
+                <i class="bi bi-x-circle-fill"></i>
+                {{ alerta.categoria }}
+                <strong>{{ alerta.pct }}%</strong>
+                · ${{ alerta.real|intcomma }} / ${{ alerta.meta|intcomma }}
+            </span>
+    {% if forloop.last %}
+        </div>
+    </div>
+    {% endif %}{% endif %}{% endfor %}
+
+    {# Bloque advertencias #}
+    {% for alerta in alertas_presupuesto %}{% if alerta.tipo == 'advertencia' %}{% if forloop.first %}
+    <div class="alerta-presupuesto advertencia" style="grid-column: 1 / -1;">
+        <div class="alerta-presupuesto-header">
+            <i class="bi bi-exclamation-circle-fill"></i>
+            Categorías cercanas al límite (≥75%)
+            {% if obra_seleccionada %}<span style="font-weight:400; margin-left:4px;">· proyecto seleccionado</span>{% endif %}
+        </div>
+        <div class="alerta-items">
+    {% endif %}
+            <span class="alerta-chip advertencia">
+                <i class="bi bi-dash-circle-fill"></i>
+                {{ alerta.categoria }}
+                <strong>{{ alerta.pct }}%</strong>
+                · ${{ alerta.real|intcomma }} / ${{ alerta.meta|intcomma }}
+            </span>
+    {% if forloop.last %}
+        </div>
+    </div>
+    {% endif %}{% endif %}{% endfor %}
+
+{% endif %}
     <div class="kpi-card">
         <div class="kpi-label">Presupuesto</div>
         <div class="kpi-value">${{ presupuesto_total|intcomma }}</div>
         <div class="kpi-meta">Total asignado</div>
     </div>
-
     <div class="kpi-card">
         <div class="kpi-label">Gastado</div>
         <div class="kpi-value">${{ total_validado|intcomma }}</div>
         <div class="kpi-meta">{{ cantidad_gastos }} boletas registradas</div>
     </div>
-
     <div class="kpi-card">
         <div class="kpi-label">Disponible</div>
         <div class="kpi-value {% if presupuesto_disponible < 0 %}text-danger{% endif %}">
@@ -279,18 +276,22 @@
             {{ porcentaje_gastado }}% consumido
         </div>
     </div>
-
     <div class="kpi-card">
         <div class="kpi-label">Documentos</div>
         <div class="kpi-value">{{ cantidad_gastos }}</div>
         <div class="kpi-meta">Boletas y facturas</div>
     </div>
-
 </div>
 
+<!-- GRÁFICO EVOLUCIÓN CON SELECTOR -->
 <div class="panel" style="margin-bottom: 16px;">
     <div class="panel-header">
         <h3 class="panel-title">Evolución de gastos</h3>
+        <div class="granularity-btns">
+            <button class="gran-btn" data-gran="diario">Diario</button>
+            <button class="gran-btn active" data-gran="mensual">Mensual</button>
+            <button class="gran-btn" data-gran="anual">Anual</button>
+        </div>
     </div>
     <div style="height: 240px; position: relative;">
         <canvas id="chartEvolucion"></canvas>
@@ -303,7 +304,6 @@
             <h3 class="panel-title">Control presupuestario</h3>
             {% if obra_seleccionada %}<i class="bi bi-funnel" style="color: var(--color-text-tertiary); font-size: 13px;"></i>{% endif %}
         </div>
-
         {% if not obra_seleccionada %}
             <div class="empty-state">
                 <i class="bi bi-hand-index"></i>
@@ -313,7 +313,6 @@
             <div id="trackers"></div>
         {% endif %}
     </div>
-
     <div class="panel">
         <div class="panel-header">
             <h3 class="panel-title">Por categoría</h3>
@@ -331,7 +330,6 @@
             Ver todos <i class="bi bi-arrow-right"></i>
         </a>
     </div>
-
     <div style="overflow-x: auto;">
         <table class="table-recent">
             <thead>
@@ -349,24 +347,12 @@
                         onkeypress="if(event.key==='Enter')window.location.href='{% url "editar_gasto" gasto.id %}';">
                         <td>
                             <div class="provider">{{ gasto.rut_emisor|default:"Sin RUT" }}</div>
-                            <div class="meta">
-                                Folio #{{ gasto.folio|default:"S/F" }} · {{ gasto.fecha_emision|date:"d M, Y" }}
-                            </div>
+                            <div class="meta">Folio #{{ gasto.folio|default:"S/F" }} · {{ gasto.fecha_emision|date:"d M, Y" }}</div>
                         </td>
                         <td>
-                            {% if gasto.categoria == 'MATERIALES' %}
-                                <span class="badge-cat badge-materiales">Materiales</span>
-                            {% elif gasto.categoria == 'MANO_OBRA' %}
-                                <span class="badge-cat badge-mano_obra">Mano de obra</span>
-                            {% elif gasto.categoria == 'MAQUINARIA' %}
-                                <span class="badge-cat badge-maquinaria">Maquinaria</span>
-                            {% elif gasto.categoria == 'COMBUSTIBLE' %}
-                                <span class="badge-cat badge-combustible">Combustible</span>
-                            {% elif gasto.categoria == 'ALIMENTACION' %}
-                                <span class="badge-cat badge-alimentacion">Alimentación</span>
-                            {% else %}
-                                <span class="badge-cat badge-default">{{ gasto.get_categoria_display }}</span>
-                            {% endif %}
+                            <span class="badge-cat badge-{{ gasto.categoria|lower }}">
+                                {{ gasto.get_categoria_display }}
+                            </span>
                         </td>
                         <td>
                             {% if gasto.monto_total > 0 and gasto.rut_emisor %}
@@ -394,9 +380,9 @@
 
 {% endblock %}
 
-
 {% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function() {
     Chart.defaults.font.family = "'Inter', sans-serif";
@@ -409,19 +395,25 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     }, 100);
 
-    // === EVOLUCIÓN ===
+    // === DATASETS EVOLUCIÓN ===
+    const series = {
+        diario:  { labels: {{ labels_diario|safe }},  data: {{ data_diario|safe }} },
+        mensual: { labels: {{ labels_mensual|safe }}, data: {{ data_mensual|safe }} },
+        anual:   { labels: {{ labels_anual|safe }},   data: {{ data_anual|safe }} },
+    };
+
     const ctxEvo = document.getElementById('chartEvolucion').getContext('2d');
     const gradientFill = ctxEvo.createLinearGradient(0, 0, 0, 240);
     gradientFill.addColorStop(0, 'rgba(83, 74, 183, 0.18)');
     gradientFill.addColorStop(1, 'rgba(83, 74, 183, 0)');
 
-    new Chart(ctxEvo, {
+    const chartEvo = new Chart(ctxEvo, {
         type: 'line',
         data: {
-            labels: {{ labels_grafico|safe }},
+            labels: series.mensual.labels,
             datasets: [{
-                label: 'Gasto mensual',
-                data: {{ data_grafico|safe }},
+                label: 'Gastos',
+                data: series.mensual.data,
                 borderColor: '#534AB7',
                 backgroundColor: gradientFill,
                 borderWidth: 2,
@@ -437,7 +429,18 @@ document.addEventListener("DOMContentLoaded", function() {
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
+            plugins: {
+                legend: { display: false },
+                datalabels: { display: false },
+                tooltip: {
+                    backgroundColor: '#2C2C2A',
+                    padding: 10,
+                    cornerRadius: 6,
+                    callbacks: {
+                        label: c => ' $' + c.parsed.y.toLocaleString('es-CL')
+                    }
+                }
+            },
             interaction: { intersect: false, mode: 'index' },
             scales: {
                 x: { grid: { display: false }, border: { display: false } },
@@ -450,18 +453,52 @@ document.addEventListener("DOMContentLoaded", function() {
                     }
                 }
             }
-        }
+        },
+        plugins: [ChartDataLabels]
     });
 
-    // === CATEGORÍAS ===
+    // Botones de granularidad
+    document.querySelectorAll('.gran-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const gran = this.dataset.gran;
+            const s = series[gran];
+            chartEvo.data.labels = s.labels;
+            chartEvo.data.datasets[0].data = s.data;
+            chartEvo.data.datasets[0].label = gran === 'diario' ? 'Gasto diario' :
+                                               gran === 'mensual' ? 'Gasto mensual' : 'Gasto anual';
+            chartEvo.update('active');
+            document.querySelectorAll('.gran-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+        });
+    });
+
+    // === CATEGORÍAS (dona con % ejecución vs presupuesto) ===
+    const labelesCat  = {{ labels_cat|safe }};
+    const datosReal   = {{ data_cat|safe }};
+    const datosPresup = {{ data_presup|safe }};
+
+    // Calcular % ejecución por categoría
+    const pctEjecucion = labelesCat.map((_, i) => {
+        const real   = datosReal[i]   || 0;
+        const presup = datosPresup[i] || 0;
+        return presup > 0 ? parseFloat(((real / presup) * 100).toFixed(1)) : (real > 0 ? 100 : 0);
+    });
+
+    // Color semántico por nivel de ejecución
+    const coloresCat = pctEjecucion.map(p =>
+        p >= 100 ? '#A32D2D' :   // rojo — excedido
+        p >= 75  ? '#BA7517' :   // amarillo — advertencia
+                   '#1D9E75'     // verde — ok
+    );
+
     const ctxCat = document.getElementById('chartCategorias').getContext('2d');
     new Chart(ctxCat, {
         type: 'doughnut',
         data: {
-            labels: {{ labels_cat|safe }},
+            labels: labelesCat,
             datasets: [{
-                data: {{ data_cat|safe }},
-                backgroundColor: ['#534AB7', '#1D9E75', '#BA7517', '#A32D2D', '#185FA5', '#7F77DD', '#888780'],
+                data: pctEjecucion,
+                backgroundColor: coloresCat,
                 borderWidth: 2,
                 borderColor: '#fff'
             }]
@@ -472,50 +509,81 @@ document.addEventListener("DOMContentLoaded", function() {
             plugins: {
                 legend: {
                     position: 'right',
-                    labels: { usePointStyle: true, padding: 12, font: { size: 11 } }
+                    labels: {
+                        usePointStyle: true,
+                        padding: 12,
+                        font: { size: 11 },
+                        generateLabels: function(chart) {
+                            return chart.data.labels.map((label, i) => ({
+                                text: label + '  ' + pctEjecucion[i] + '%',
+                                fillStyle: coloresCat[i],
+                                strokeStyle: '#fff',
+                                lineWidth: 2,
+                                pointStyle: 'circle',
+                                index: i
+                            }));
+                        }
+                    }
                 },
                 tooltip: {
                     backgroundColor: '#2C2C2A',
                     padding: 10,
                     cornerRadius: 6,
-                    callbacks: { label: c => ' $' + c.parsed.toLocaleString('es-CL') }
+                    callbacks: {
+                        label: function(c) {
+                            const i = c.dataIndex;
+                            const real   = datosReal[i]   || 0;
+                            const presup = datosPresup[i] || 0;
+                            return [
+                                ' Ejecución: ' + pctEjecucion[i] + '%',
+                                ' Gastado: $' + real.toLocaleString('es-CL'),
+                                presup > 0 ? ' Presupuesto: $' + presup.toLocaleString('es-CL') : ' Sin presupuesto'
+                            ];
+                        },
+                        title: c => c[0].label
+                    }
+                },
+                datalabels: {
+                    color: '#fff',
+                    font: { weight: '600', size: 11 },
+                    formatter: function(value) {
+                        return value > 4 ? value + '%' : '';
+                    }
                 }
             },
-            cutout: '70%'
-        }
+            cutout: '65%'
+        },
+        plugins: [ChartDataLabels]
     });
 
     // === TRACKERS PRESUPUESTARIOS ===
     const trackersDiv = document.getElementById('trackers');
     if (trackersDiv) {
-        const labels = {{ labels_cat|safe }};
-        const datosReal = {{ data_cat|safe }};
-        const datosPresup = {{ data_presup|safe }};
-
-        if (labels.length === 0) {
+        if (labelesCat.length === 0) {
             trackersDiv.innerHTML = '<div class="empty-state"><i class="bi bi-inbox"></i><p>Sin datos de presupuesto</p></div>';
         } else {
             let html = '';
-            labels.forEach((label, i) => {
-                const real = datosReal[i] || 0;
+            labelesCat.forEach((label, i) => {
+                const real   = datosReal[i]   || 0;
                 const presup = datosPresup[i] || 0;
-                const pct = presup > 0 ? Math.round((real / presup) * 100) : (real > 0 ? 100 : 0);
-                let claseFill = 'ok';
-                if (pct >= 100) claseFill = 'over';
-                else if (pct >= 75) claseFill = 'warn';
-                const ancho = Math.min(pct, 100);
-
+                const pct    = pctEjecucion[i];
+                let claseFill = pct >= 100 ? 'over' : pct >= 75 ? 'warn' : 'ok';
+                const ancho   = Math.min(pct, 100);
+                const colorPct = pct >= 100 ? 'var(--color-danger)' : pct >= 75 ? 'var(--color-warning)' : 'var(--color-success)';
                 html += `
                     <div class="tracker">
                         <div class="tracker-label-row">
                             <span class="tracker-label">${label}</span>
-                            <span class="tracker-value">$${real.toLocaleString('es-CL')} <span class="total">/ $${presup.toLocaleString('es-CL')}</span></span>
+                            <span class="tracker-value">
+                                $${real.toLocaleString('es-CL')}
+                                <span class="total">/ $${presup.toLocaleString('es-CL')}</span>
+                                <span style="margin-left:6px;font-size:11px;font-weight:700;color:${colorPct}">${pct}%</span>
+                            </span>
                         </div>
                         <div class="tracker-bar">
-                            <div class="tracker-fill ${claseFill}" style="width: 0%;" data-w="${ancho}"></div>
+                            <div class="tracker-fill ${claseFill}" style="width:0%" data-w="${ancho}"></div>
                         </div>
-                    </div>
-                `;
+                    </div>`;
             });
             trackersDiv.innerHTML = html;
             setTimeout(() => {

@@ -1,7 +1,6 @@
 """URLs del módulo de gastos."""
 from django.urls import path
 from django.contrib.auth.views import LoginView, LogoutView
-
 from . import views
 
 urlpatterns = [
@@ -31,4 +30,14 @@ urlpatterns = [
     path('proyectos/', views.lista_obras, name='lista_obras'),
     path('proyectos/nuevo/', views.crear_obra, name='crear_obra'),
     path('presupuesto/<int:obra_id>/', views.definir_presupuesto, name='definir_presupuesto'),
+
+    path('obra/<int:obra_id>/curva-s/', views.curva_s, name='curva_s'),
+ 
+# Subcontratos
+    path('obra/<int:obra_id>/subcontratos/', views.lista_subcontratos, name='lista_subcontratos'),
+    path('obra/<int:obra_id>/subcontratos/nuevo/', views.crear_subcontrato, name='crear_subcontrato'),
+    path('subcontrato/<int:pk>/editar/', views.editar_subcontrato, name='editar_subcontrato'),
+    
+    # Avance físico
+    path('obra/<int:obra_id>/avance-fisico/', views.avance_fisico, name='avance_fisico'),
 ]

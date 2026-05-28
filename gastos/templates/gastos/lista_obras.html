@@ -1,104 +1,34 @@
 {% extends 'base.html' %}
 
-{% block title %}Proyectos · ObraGastos{% endblock %}
+{% block title %}Proyectos · SpendBox{% endblock %}
 
 {% block extra_head %}
 <style>
-    .header-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-end;
-        gap: 16px;
-        margin-bottom: 24px;
-        flex-wrap: wrap;
-    }
-
-    .obras-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-        gap: 14px;
-    }
-
-    .obra-card {
-        background: var(--color-surface);
-        border: 1px solid var(--color-border);
-        border-radius: var(--radius-lg);
-        padding: 18px;
-        transition: all 0.18s ease;
-        display: flex;
-        flex-direction: column;
-    }
-    .obra-card:hover {
-        border-color: var(--color-primary);
-        box-shadow: 0 2px 8px rgba(83, 74, 183, 0.06);
-    }
-
-    .obra-card-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: 8px;
-        gap: 10px;
-    }
-    .obra-name {
-        font-size: 15px;
-        font-weight: 600;
-        color: var(--color-text-primary);
-        margin: 0;
-        line-height: 1.3;
-    }
-
-    .badge-status {
-        font-size: 11px;
-        font-weight: 500;
-        padding: 3px 8px;
-        border-radius: var(--radius-sm);
-        white-space: nowrap;
-    }
+    .header-row { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; }
+    .obras-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+    .obra-card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 18px; transition: all 0.18s ease; display: flex; flex-direction: column; }
+    .obra-card:hover { border-color: var(--color-primary); box-shadow: 0 2px 8px rgba(83,74,183,0.06); }
+    .obra-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; gap: 10px; }
+    .obra-name { font-size: 15px; font-weight: 600; color: var(--color-text-primary); margin: 0; line-height: 1.3; }
+    .badge-status { font-size: 11px; font-weight: 500; padding: 3px 8px; border-radius: var(--radius-sm); white-space: nowrap; }
     .badge-active { background: var(--color-success-light); color: #085041; }
     .badge-archived { background: var(--color-bg); color: var(--color-text-tertiary); }
+    .obra-meta { font-size: 12.5px; color: var(--color-text-tertiary); margin: 4px 0 14px; display: flex; align-items: center; gap: 6px; }
 
-    .obra-meta {
-        font-size: 12.5px;
-        color: var(--color-text-tertiary);
-        margin: 4px 0 14px;
-        display: flex;
-        align-items: center;
-        gap: 6px;
+    .obra-actions { margin-top: auto; padding-top: 12px; border-top: 1px solid var(--color-border); }
+    .actions-primary { display: flex; gap: 6px; margin-bottom: 8px; }
+    .actions-secondary { display: flex; gap: 6px; }
+    .action-btn {
+        flex: 1; text-align: center; font-size: 11.5px;
+        padding: 6px 8px; border-radius: var(--radius-md);
+        background: var(--color-bg); color: var(--color-text-primary);
+        text-decoration: none; font-weight: 500;
+        transition: all 0.18s ease; display: flex; align-items: center; justify-content: center; gap: 4px;
     }
+    .action-btn:hover { background: var(--color-primary-light); color: var(--color-primary-hover); }
+    .action-btn.accent { background: var(--color-primary-light); color: var(--color-primary-hover); }
 
-    .obra-actions {
-        margin-top: auto;
-        display: flex;
-        gap: 8px;
-        padding-top: 12px;
-        border-top: 1px solid var(--color-border);
-    }
-    .obra-actions a {
-        flex: 1;
-        text-align: center;
-        font-size: 12px;
-        padding: 7px 10px;
-        border-radius: var(--radius-md);
-        background: var(--color-bg);
-        color: var(--color-text-primary);
-        text-decoration: none;
-        font-weight: 500;
-        transition: all 0.18s ease;
-    }
-    .obra-actions a:hover {
-        background: var(--color-primary-light);
-        color: var(--color-primary-hover);
-    }
-
-    .empty-state {
-        background: var(--color-surface);
-        border: 1px dashed var(--color-border-strong);
-        border-radius: var(--radius-lg);
-        padding: 60px 20px;
-        text-align: center;
-        color: var(--color-text-tertiary);
-    }
+    .empty-state { background: var(--color-surface); border: 1px dashed var(--color-border-strong); border-radius: var(--radius-lg); padding: 60px 20px; text-align: center; color: var(--color-text-tertiary); }
     .empty-state i { font-size: 40px; opacity: 0.4; display: block; margin-bottom: 8px; }
 </style>
 {% endblock %}
@@ -131,12 +61,27 @@
             <i class="bi bi-geo-alt"></i> {{ obra.ubicacion|default:"Sin ubicación" }}
         </div>
         <div class="obra-actions">
-            <a href="{% url 'definir_presupuesto' obra.id %}" title="Definir presupuesto">
-                <i class="bi bi-calculator"></i> Presupuesto
-            </a>
-            <a href="{% url 'dashboard' %}?obra={{ obra.id }}" title="Ver gastos del proyecto">
-                <i class="bi bi-bar-chart"></i> Resumen
-            </a>
+            <!-- Acciones principales -->
+            <div class="actions-primary">
+                <a href="{% url 'dashboard' %}?obra={{ obra.id }}" class="action-btn accent" title="Ver resumen">
+                    <i class="bi bi-bar-chart"></i> Resumen
+                </a>
+                <a href="{% url 'definir_presupuesto' obra.id %}" class="action-btn" title="Definir presupuesto">
+                    <i class="bi bi-calculator"></i> Presupuesto
+                </a>
+            </div>
+            <!-- Acciones avanzadas -->
+            <div class="actions-secondary">
+                <a href="{% url 'curva_s' obra.id %}" class="action-btn" title="Curva S">
+                    <i class="bi bi-graph-up-arrow"></i> Curva S
+                </a>
+                <a href="{% url 'lista_subcontratos' obra.id %}" class="action-btn" title="Subcontratos">
+                    <i class="bi bi-person-workspace"></i> Subcontratos
+                </a>
+                <a href="{% url 'avance_fisico' obra.id %}" class="action-btn" title="Avance físico">
+                    <i class="bi bi-clipboard-data"></i> Avance
+                </a>
+            </div>
         </div>
     </div>
     {% endfor %}
@@ -144,8 +89,8 @@
 {% else %}
 <div class="empty-state">
     <i class="bi bi-buildings"></i>
-    <h3 style="font-weight: 600; margin: 0 0 6px; font-size: 15px;">No tienes proyectos creados</h3>
-    <p style="margin: 0 0 16px; font-size: 13px;">Crea tu primera obra para empezar a asignar gastos.</p>
+    <h3 style="font-weight:600; margin:0 0 6px; font-size:15px;">No tienes proyectos creados</h3>
+    <p style="margin:0 0 16px; font-size:13px;">Crea tu primera obra para empezar a asignar gastos.</p>
     <a href="{% url 'crear_obra' %}" class="btn-primary-modern">
         <i class="bi bi-plus-lg"></i> Crear primer proyecto
     </a>

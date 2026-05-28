@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}{% if sub %}Editar{% else %}Nuevo{% endif %} Subcontrato · {{ obra.nombre }}{% endblock %}
+
+{% block extra_head %}
+<style>
+    .form-container { max-width: 640px; margin: 0 auto; }
+    .panel { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 24px; }
+    .form-group { margin-bottom: 16px; }
+    .form-label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; font-weight: 600; color: var(--color-text-secondary); margin-bottom: 6px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width:600px) { .form-row { grid-template-columns: 1fr; } }
+    .actions-row { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <div style="margin-bottom:16px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
+        <div>
+            <h1 class="page-title">{% if sub %}Editar{% else %}Nuevo{% endif %} subcontrato</h1>
+            <p class="page-subtitle">{{ obra.nombre }}</p>
+        </div>
+        <a href="{% url 'lista_subcontratos' obra.id %}" class="btn-secondary-modern">
+            <i class="bi bi-arrow-left"></i> Volver
+        </a>
+    </div>
+
+    <div class="panel">
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Nombre empresa / persona *</label>
+                    <input type="text" name="nombre" value="{{ sub.nombre|default:'' }}"
+                           class="input-modern" required placeholder="Constructora XYZ">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">RUT</label>
+                    <input type="text" name="rut" value="{{ sub.rut|default:'' }}"
+                           class="input-modern" placeholder="76.123.456-7">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Descripción del trabajo *</label>
+                <textarea name="descripcion_trabajo" class="input-modern" rows="3"
+                          required placeholder="Ej: Instalación de estructura metálica segundo piso">{{ sub.descripcion_trabajo|default:'' }}</textarea>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Fecha inicio *</label>
+                    <input type="date" name="fecha_inicio"
+                           value="{{ sub.fecha_inicio|date:'Y-m-d'|default:'' }}"
+                           class="input-modern" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Fecha término estimada</label>
+                    <input type="date" name="fecha_termino"
+                           value="{{ sub.fecha_termino|date:'Y-m-d'|default:'' }}"
+                           class="input-modern">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Monto total del contrato (CLP) *</label>
+                    <div style="position:relative;">
+                        <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--color-text-tertiary);">$</span>
+                        <input type="number" name="monto_contrato"
+                               value="{{ sub.monto_contrato|default:'' }}"
+                               class="input-modern" style="padding-left:22px; text-align:right;"
+                               min="0" step="1000" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Estado</label>
+                    <select name="estado" class="input-modern">
+                        {% for val, label in estados %}
+                        <option value="{{ val }}" {% if sub.estado == val %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Notas (opcional)</label>
+                <textarea name="notas" class="input-modern" rows="2"
+                          placeholder="Observaciones, condiciones especiales...">{{ sub.notas|default:'' }}</textarea>
+            </div>
+
+            <div class="actions-row">
+                <a href="{% url 'lista_subcontratos' obra.id %}" class="btn-secondary-modern">Cancelar</a>
+                <button type="submit" class="btn-primary-modern">
+                    <i class="bi bi-check2"></i> {% if sub %}Guardar cambios{% else %}Registrar subcontrato{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Subcontratos · {{ obra.nombre }}{% endblock %}
+
+{% block extra_head %}
+<style>
+    .panel { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 20px; margin-bottom: 16px; }
+    .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .panel-title { font-size: 14px; font-weight: 600; margin: 0; }
+
+    .sub-card {
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-lg);
+        padding: 16px;
+        margin-bottom: 12px;
+        background: var(--color-surface);
+        transition: box-shadow 0.18s;
+    }
+    .sub-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+    .sub-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+    .sub-nombre { font-size: 15px; font-weight: 600; color: var(--color-text-primary); }
+    .sub-rut { font-size: 12px; color: var(--color-text-tertiary); margin-top: 2px; }
+
+    .badge-estado {
+        font-size: 11px; font-weight: 600;
+        padding: 3px 10px; border-radius: 20px;
+        white-space: nowrap;
+    }
+    .badge-ACTIVO    { background: #E1F5EE; color: #085041; }
+    .badge-PAUSADO   { background: #FAEEDA; color: #854F0B; }
+    .badge-TERMINADO { background: var(--color-bg); color: var(--color-text-secondary); }
+    .badge-DISPUTA   { background: #FCEBEB; color: #791F1F; }
+
+    .sub-body { margin-top: 12px; }
+    .sub-desc { font-size: 13px; color: var(--color-text-secondary); margin-bottom: 12px; }
+
+    .progress-row { margin-bottom: 6px; }
+    .progress-label { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; }
+    .progress-bar-wrap { height: 6px; background: var(--color-bg); border-radius: 3px; overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: 3px; transition: width 0.8s ease; }
+
+    .montos-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+    .monto-item { background: var(--color-bg); border-radius: var(--radius-md); padding: 8px 10px; }
+    .monto-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--color-text-tertiary); margin-bottom: 2px; }
+    .monto-val { font-size: 14px; font-weight: 600; color: var(--color-text-primary); }
+    .monto-val.danger { color: var(--color-danger); }
+    .monto-val.success { color: var(--color-success); }
+
+    .sub-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--color-border); flex-wrap: wrap; gap: 8px; }
+    .fechas { font-size: 11.5px; color: var(--color-text-tertiary); }
+
+    .empty-state { text-align: center; padding: 50px 20px; color: var(--color-text-tertiary); }
+    .empty-state i { font-size: 36px; opacity: 0.3; display: block; margin-bottom: 8px; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div style="margin-bottom:16px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
+    <div>
+        <h1 class="page-title">Subcontratos · {{ obra.nombre }}</h1>
+        <p class="page-subtitle">Control de pagos y estado de subcontratos</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'lista_obras' %}" class="btn-secondary-modern"><i class="bi bi-arrow-left"></i> Proyectos</a>
+        <a href="{% url 'crear_subcontrato' obra.id %}" class="btn-primary-modern">
+            <i class="bi bi-plus-lg"></i> Nuevo subcontrato
+        </a>
+    </div>
+</div>
+
+{% if subcontratos %}
+
+    <div class="panel" style="padding:14px 16px; margin-bottom:16px;">
+        <div style="display:flex; gap:20px; flex-wrap:wrap; font-size:13px;">
+            <span><strong>${{ total_contratado|intcomma }}</strong> <span style="color:var(--color-text-tertiary);">total contratado</span></span>
+            <span><strong>{{ subcontratos|length }}</strong> <span style="color:var(--color-text-tertiary);">subcontratos</span></span>
+        </div>
+    </div>
+
+    {% for sub in subcontratos %}
+    <div class="sub-card">
+        <div class="sub-header">
+            <div>
+                <div class="sub-nombre">{{ sub.nombre }}</div>
+                {% if sub.rut %}<div class="sub-rut">RUT {{ sub.rut }}</div>{% endif %}
+            </div>
+            <div style="display:flex; align-items:center; gap:8px;">
+                <span class="badge-estado badge-{{ sub.estado }}">{{ sub.get_estado_display }}</span>
+                <a href="{% url 'editar_subcontrato' sub.pk %}" class="btn-secondary-modern" style="padding:5px 10px; font-size:12px;">
+                    <i class="bi bi-pencil"></i>
+                </a>
+            </div>
+        </div>
+
+        <div class="sub-body">
+            <p class="sub-desc">{{ sub.descripcion_trabajo }}</p>
+
+            <div class="progress-row">
+                <div class="progress-label">
+                    <span style="color:var(--color-text-secondary);">Pago</span>
+                    <span style="font-weight:600;">{{ sub.porcentaje_pagado }}%</span>
+                </div>
+                <div class="progress-bar-wrap">
+                    <div class="progress-fill"
+                         style="width:{{ sub.porcentaje_pagado }}%;
+                                background:{% if sub.porcentaje_pagado >= 100 %}var(--color-success){% elif sub.porcentaje_pagado >= 50 %}var(--color-warning){% else %}var(--color-primary){% endif %};">
+                    </div>
+                </div>
+            </div>
+
+            <div class="montos-grid">
+                <div class="monto-item">
+                    <div class="monto-label">Contrato</div>
+                    <div class="monto-val">${{ sub.monto_contrato|intcomma }}</div>
+                </div>
+                <div class="monto-item">
+                    <div class="monto-label">Pagado</div>
+                    <div class="monto-val success">${{ sub.monto_pagado|intcomma }}</div>
+                </div>
+                <div class="monto-item">
+                    <div class="monto-label">Pendiente</div>
+                    <div class="monto-val {% if sub.monto_pendiente > 0 %}danger{% endif %}">
+                        ${{ sub.monto_pendiente|intcomma }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="sub-footer">
+            <div class="fechas">
+                <i class="bi bi-calendar3"></i>
+                Inicio {{ sub.fecha_inicio|date:"d M Y" }}
+                {% if sub.fecha_termino %}· Término {{ sub.fecha_termino|date:"d M Y" }}{% endif %}
+            </div>
+            {% if sub.notas %}
+            <div style="font-size:12px; color:var(--color-text-tertiary); max-width:400px;">
+                <i class="bi bi-chat-text"></i> {{ sub.notas|truncatechars:80 }}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+
+{% else %}
+    <div class="panel">
+        <div class="empty-state">
+            <i class="bi bi-person-workspace"></i>
+            <h3 style="font-weight:600; font-size:14px; margin:0 0 6px;">Sin subcontratos registrados</h3>
+            <p style="font-size:13px; margin:0 0 16px;">Registra los contratos con empresas o personas externas.</p>
+            <a href="{% url 'crear_subcontrato' obra.id %}" class="btn-primary-modern">
+                <i class="bi bi-plus-lg"></i> Registrar primer subcontrato
+            </a>
+        </div>
+    </div>
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,209 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Curva S · {{ obra.nombre }}{% endblock %}
+
+{% block extra_head %}
+<style>
+    .page-container { max-width: 1100px; }
+    .panel { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 20px; margin-bottom: 16px; }
+    .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 8px; }
+    .panel-title { font-size: 14px; font-weight: 600; margin: 0; }
+    .kpi-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
+    @media (max-width: 600px) { .kpi-row { grid-template-columns: 1fr; } }
+    .kpi { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 14px; }
+    .kpi-label { font-size: 11px; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 4px; }
+    .kpi-val { font-size: 20px; font-weight: 600; letter-spacing: -0.4px; }
+    .kpi-val.danger { color: var(--color-danger); }
+    .kpi-val.success { color: var(--color-success); }
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
+    .form-row-inline { display: flex; gap: 10px; align-items: flex-end; margin-bottom: 16px; flex-wrap: wrap; }
+    .field-group { display: flex; flex-direction: column; }
+    .field-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; color: var(--color-text-secondary); margin-bottom: 5px; }
+    .input-monto { width: 100%; padding: 8px 12px 8px 22px; border: 1px solid var(--color-border); border-radius: var(--radius-md); font-size: 13.5px; font-family: inherit; text-align: right; background: var(--color-surface); transition: all 0.18s; }
+    .input-monto:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(83,74,183,0.1); }
+    .legend-row { display: flex; gap: 16px; font-size: 12px; color: var(--color-text-secondary); }
+    .legend-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-container">
+
+    <div style="margin-bottom:16px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
+        <div>
+            <h1 class="page-title">Curva S · {{ obra.nombre }}</h1>
+            <p class="page-subtitle">Avance financiero planificado vs real acumulado</p>
+        </div>
+        <a href="{% url 'lista_obras' %}" class="btn-secondary-modern"><i class="bi bi-arrow-left"></i> Proyectos</a>
+    </div>
+
+    <div class="kpi-row">
+        <div class="kpi">
+            <div class="kpi-label">Presupuesto total</div>
+            <div class="kpi-val">${{ presupuesto_total|intcomma }}</div>
+        </div>
+        <div class="kpi">
+            <div class="kpi-label">Gastado real</div>
+            <div class="kpi-val">${{ gasto_real_total|intcomma }}</div>
+        </div>
+        <div class="kpi">
+            <div class="kpi-label">Diferencia</div>
+            <div class="kpi-val {% if diferencia < 0 %}danger{% else %}success{% endif %}">
+                {% if diferencia < 0 %}−{% endif %}${{ diferencia_abs|intcomma }}
+            </div>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-header">
+            <h3 class="panel-title">Curva S acumulada</h3>
+            <div class="legend-row">
+                <span><span class="legend-dot" style="background:#534AB7;"></span>Planificado</span>
+                <span><span class="legend-dot" style="background:#1D9E75;"></span>Real</span>
+            </div>
+        </div>
+        <div style="height:280px; position:relative;">
+            <canvas id="chartCurvaS"></canvas>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-header">
+            <h3 class="panel-title">Ingresar planificación mensual</h3>
+        </div>
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-row-inline">
+                <div class="field-group">
+                    <label class="field-label">Mes</label>
+                    <select name="mes" class="input-modern" style="min-width:130px;">
+                        {% for num, nombre in meses_lista %}
+                        <option value="{{ num }}" {% if num == mes_sel %}selected{% endif %}>{{ nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="field-group">
+                    <label class="field-label">Año</label>
+                    <select name="anio" class="input-modern">
+                        {% for a in anios %}
+                        <option value="{{ a }}" {% if a == anio_sel %}selected{% endif %}>{{ a }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <a href="?mes={{ mes_sel }}&anio={{ anio_sel }}" class="btn-secondary-modern" style="align-self:flex-end;">
+                    <i class="bi bi-eye"></i> Ver este mes
+                </a>
+            </div>
+
+            <div class="form-grid">
+                {% for codigo, nombre, monto in categorias_con_plan %}
+                <div class="field-group">
+                    <label class="field-label">{{ nombre }}</label>
+                    <div style="position:relative;">
+                        <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--color-text-tertiary);font-size:13px;">$</span>
+                        <input type="number" name="plan_{{ codigo }}"
+                               value="{{ monto }}"
+                               min="0" step="1000"
+                               class="input-monto">
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div style="display:flex; justify-content:flex-end; margin-top:16px;">
+                <button type="submit" class="btn-primary-modern">
+                    <i class="bi bi-check2"></i> Guardar planificación
+                </button>
+            </div>
+        </form>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+const labels   = {{ labels|safe }};
+const realAcum = {{ real_acum|safe }};
+const planAcum = {{ plan_acum|safe }};
+
+const ctx = document.getElementById('chartCurvaS').getContext('2d');
+
+const gradReal = ctx.createLinearGradient(0, 0, 0, 280);
+gradReal.addColorStop(0, 'rgba(29,158,117,0.2)');
+gradReal.addColorStop(1, 'rgba(29,158,117,0)');
+
+const gradPlan = ctx.createLinearGradient(0, 0, 0, 280);
+gradPlan.addColorStop(0, 'rgba(83,74,183,0.15)');
+gradPlan.addColorStop(1, 'rgba(83,74,183,0)');
+
+new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels,
+        datasets: [
+            {
+                label: 'Planificado acumulado',
+                data: planAcum,
+                borderColor: '#534AB7',
+                backgroundColor: gradPlan,
+                borderWidth: 2,
+                borderDash: [5, 3],
+                pointRadius: 3,
+                fill: true,
+                tension: 0.3,
+            },
+            {
+                label: 'Real acumulado',
+                data: realAcum,
+                borderColor: '#1D9E75',
+                backgroundColor: gradReal,
+                borderWidth: 2,
+                pointRadius: 4,
+                pointBackgroundColor: '#fff',
+                pointBorderColor: '#1D9E75',
+                pointBorderWidth: 2,
+                fill: true,
+                tension: 0.3,
+            },
+        ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: false },
+            tooltip: {
+                backgroundColor: '#2C2C2A',
+                padding: 10,
+                cornerRadius: 6,
+                callbacks: {
+                    label: c => ' ' + c.dataset.label + ': $' + c.parsed.y.toLocaleString('es-CL')
+                }
+            }
+        },
+        scales: {
+            x: { grid: { display: false }, border: { display: false } },
+            y: {
+                beginAtZero: true,
+                grid: { color: '#F1EFE8' },
+                border: { display: false },
+                ticks: { callback: v => '$' + v.toLocaleString('es-CL', {notation:'compact'}) }
+            }
+        }
+    }
+});
+
+// Al cambiar mes/año actualiza el link "Ver este mes"
+document.querySelectorAll('select[name="mes"], select[name="anio"]').forEach(sel => {
+    sel.addEventListener('change', () => {
+        const mes  = document.querySelector('select[name="mes"]').value;
+        const anio = document.querySelector('select[name="anio"]').value;
+        const link = document.querySelector('a[href*="mes="]');
+        if (link) link.href = `?mes=${mes}&anio=${anio}`;
+    });
+});
+</script>
+{% endblock %}

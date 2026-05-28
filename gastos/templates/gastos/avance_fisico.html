@@ -1,0 +1,255 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Avance físico · {{ obra.nombre }}{% endblock %}
+
+{% block extra_head %}
+<style>
+    .panel { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 20px; margin-bottom: 16px; }
+    .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .panel-title { font-size: 14px; font-weight: 600; margin: 0; }
+
+    .table-avance { width: 100%; font-size: 13px; border-collapse: collapse; }
+    .table-avance th {
+        text-align: left; padding: 10px 12px;
+        font-size: 11px; text-transform: uppercase; font-weight: 600;
+        color: var(--color-text-tertiary); letter-spacing: 0.4px;
+        border-bottom: 1px solid var(--color-border);
+        background: var(--color-bg);
+    }
+    .table-avance td { padding: 10px 12px; border-bottom: 1px solid var(--color-bg); vertical-align: middle; }
+    .table-avance th.num, .table-avance td.num { text-align: right; }
+
+    .bar-dual {
+        position: relative;
+        height: 8px;
+        background: var(--color-bg);
+        border-radius: 4px;
+        overflow: visible;
+        min-width: 80px;
+    }
+    .bar-fin {
+        position: absolute;
+        top: 0; left: 0;
+        height: 100%;
+        border-radius: 4px;
+        opacity: 0.4;
+        transition: width 0.8s ease;
+    }
+    .bar-fis {
+        position: absolute;
+        top: 0; left: 0;
+        height: 100%;
+        border-radius: 4px;
+        transition: width 0.8s ease;
+    }
+
+    .alerta-badge {
+        display: inline-flex; align-items: center; gap: 4px;
+        font-size: 10px; font-weight: 600; padding: 2px 8px;
+        border-radius: 20px;
+    }
+    .alerta-ok   { background: #E1F5EE; color: #085041; }
+    .alerta-warn { background: #FAEEDA; color: #854F0B; }
+    .alerta-over { background: #FCEBEB; color: #791F1F; }
+
+    .desviacion-pos { color: var(--color-danger); font-weight: 600; }
+    .desviacion-neg { color: var(--color-success); font-weight: 600; }
+
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
+    .field-group { display: flex; flex-direction: column; }
+    .field-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; color: var(--color-text-secondary); margin-bottom: 4px; }
+    .avance-input-row { display: flex; gap: 6px; align-items: center; }
+    .avance-input-row input[type="number"] { width: 70px; padding: 7px 8px; border: 1px solid var(--color-border); border-radius: var(--radius-md); font-size: 13px; text-align: right; font-family: inherit; background: var(--color-surface); }
+    .avance-input-row input[type="number"]:focus { outline: none; border-color: var(--color-primary); }
+    .avance-input-row input[type="text"] { flex: 1; padding: 7px 10px; border: 1px solid var(--color-border); border-radius: var(--radius-md); font-size: 12px; font-family: inherit; background: var(--color-surface); }
+    .avance-input-row input[type="text"]:focus { outline: none; border-color: var(--color-primary); }
+
+    .leyenda { display: flex; gap: 16px; font-size: 12px; color: var(--color-text-secondary); }
+    .leyenda-item { display: flex; align-items: center; gap: 5px; }
+    .leyenda-color { width: 12px; height: 6px; border-radius: 3px; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div style="margin-bottom:16px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
+    <div>
+        <h1 class="page-title">Avance físico vs financiero · {{ obra.nombre }}</h1>
+        <p class="page-subtitle">Compara el % ejecutado físicamente con el presupuesto consumido</p>
+    </div>
+    <a href="{% url 'lista_obras' %}" class="btn-secondary-modern"><i class="bi bi-arrow-left"></i> Proyectos</a>
+</div>
+
+{% if tabla %}
+<div class="panel">
+    <div class="panel-header">
+        <h3 class="panel-title">Comparativo por partida</h3>
+        <div class="leyenda">
+            <div class="leyenda-item"><div class="leyenda-color" style="background:#534AB7;opacity:0.4;"></div>Financiero</div>
+            <div class="leyenda-item"><div class="leyenda-color" style="background:#1D9E75;"></div>Físico</div>
+        </div>
+    </div>
+    <div style="overflow-x:auto;">
+        <table class="table-avance">
+            <thead>
+                <tr>
+                    <th>Partida</th>
+                    <th class="num">Presupuesto</th>
+                    <th class="num">Real gastado</th>
+                    <th>Avance</th>
+                    <th class="num">% Físico</th>
+                    <th class="num">% Financiero</th>
+                    <th class="num">Proyección cierre</th>
+                    <th class="num">Desviación</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in tabla %}
+                <tr>
+                    <td style="font-weight:500;">{{ r.nombre }}</td>
+                    <td class="num">${{ r.presup|intcomma }}</td>
+                    <td class="num">${{ r.real|intcomma }}</td>
+                    <td style="min-width:100px;">
+                        <div class="bar-dual">
+                            <div class="bar-fin" style="width:{{ r.avance_fin|floatformat:0 }}%; background:#534AB7;"></div>
+                            <div class="bar-fis" style="width:{{ r.avance_fis|floatformat:0 }}%; background:#1D9E75;"></div>
+                        </div>
+                    </td>
+                    <td class="num">{{ r.avance_fis|floatformat:1 }}%</td>
+                    <td class="num">{{ r.avance_fin|floatformat:1 }}%</td>
+                    <td class="num">${{ r.proyeccion|intcomma }}</td>
+                    <td class="num">
+                        {% if r.desviacion > 0 %}
+                            <span class="desviacion-pos">+${{ r.desviacion|intcomma }}</span>
+                        {% elif r.desviacion < 0 %}
+                            <span class="desviacion-neg">−${{ r.desviacion_abs|intcomma }}</span>
+                        {% else %}
+                            <span style="color:var(--color-text-tertiary);">$0</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="alerta-badge alerta-{{ r.alerta }}">
+                            {% if r.alerta == 'over' %}<i class="bi bi-exclamation-triangle-fill"></i> Sobre presup.
+                            {% elif r.alerta == 'warn' %}<i class="bi bi-exclamation-circle"></i> Desfase
+                            {% else %}<i class="bi bi-check-circle"></i> OK
+                            {% endif %}
+                        </span>
+                        {% if r.ultima_fecha %}
+                        <div style="font-size:10.5px; color:var(--color-text-tertiary); margin-top:3px;">
+                            Actualizado {{ r.ultima_fecha|date:"d M Y" }}
+                        </div>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="panel">
+    <div class="panel-header">
+        <h3 class="panel-title">Evolución del avance físico promedio</h3>
+    </div>
+    <div style="height:200px; position:relative;">
+        <canvas id="chartAvance"></canvas>
+    </div>
+</div>
+{% endif %}
+
+<div class="panel">
+    <div class="panel-header">
+        <h3 class="panel-title">Registrar avance físico</h3>
+    </div>
+    <form method="post">
+        {% csrf_token %}
+        <div style="margin-bottom:14px;">
+            <label class="field-label">Fecha del reporte</label>
+            <input type="date" name="fecha" value="{{ hoy }}" class="input-modern" style="max-width:200px;">
+        </div>
+        <div class="form-grid">
+            {% for codigo, nombre in categorias %}
+            <div class="field-group">
+                <label class="field-label">{{ nombre }}</label>
+                <div class="avance-input-row">
+                    <input type="number" name="avance_{{ codigo }}"
+                           placeholder="0" min="0" max="100" step="0.1">
+                    <span style="font-size:12px; color:var(--color-text-tertiary);">%</span>
+                    <input type="text" name="obs_{{ codigo }}" placeholder="Observación (opcional)">
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <div style="display:flex; justify-content:flex-end; margin-top:16px;">
+            <button type="submit" class="btn-primary-modern">
+                <i class="bi bi-check2"></i> Guardar avance
+            </button>
+        </div>
+    </form>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+// Animar barras duales
+setTimeout(() => {
+    document.querySelectorAll('.bar-fin, .bar-fis').forEach(b => {
+        const w = b.style.width;
+        b.style.width = '0%';
+        setTimeout(() => { b.style.width = Math.min(parseFloat(w), 100) + '%'; }, 50);
+    });
+}, 100);
+
+// Gráfico histórico
+const labelsHist = {{ labels_hist|safe }};
+const dataHist   = {{ data_hist|safe }};
+
+if (labelsHist.length > 0) {
+    const ctx = document.getElementById('chartAvance').getContext('2d');
+    const grad = ctx.createLinearGradient(0, 0, 0, 200);
+    grad.addColorStop(0, 'rgba(29,158,117,0.2)');
+    grad.addColorStop(1, 'rgba(29,158,117,0)');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labelsHist,
+            datasets: [{
+                label: '% Avance físico promedio',
+                data: dataHist,
+                borderColor: '#1D9E75',
+                backgroundColor: grad,
+                borderWidth: 2,
+                pointRadius: 4,
+                pointBackgroundColor: '#fff',
+                pointBorderColor: '#1D9E75',
+                pointBorderWidth: 2,
+                fill: true,
+                tension: 0.3,
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: '#2C2C2A', padding: 10, cornerRadius: 6,
+                    callbacks: { label: c => ' Avance: ' + c.parsed.y.toFixed(1) + '%' }
+                }
+            },
+            scales: {
+                x: { grid: { display: false }, border: { display: false } },
+                y: {
+                    min: 0, max: 100,
+                    grid: { color: '#F1EFE8' }, border: { display: false },
+                    ticks: { callback: v => v + '%' }
+                }
+            }
+        }
+    });
+}
+</script>
+{% endblock %}
