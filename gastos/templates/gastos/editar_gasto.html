@@ -1,273 +1,82 @@
 {% extends 'base.html' %}
 {% load humanize %}
 
-{% block title %}{{ titulo }} · ObraGastos{% endblock %}
+{% block title %}{{ titulo }} · SpendBox{% endblock %}
 
 {% block extra_head %}
 <style>
-    .edit-layout {
-        display: grid;
-        grid-template-columns: 1fr 1.1fr;
-        gap: 20px;
-        align-items: start;
-    }
-    @media (max-width: 900px) {
-        .edit-layout { grid-template-columns: 1fr; }
-    }
-
-    .panel {
-        background: var(--color-surface);
-        border: 1px solid var(--color-border);
-        border-radius: var(--radius-lg);
-        padding: 22px;
-    }
-
-    .panel-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 18px;
-        padding-bottom: 14px;
-        border-bottom: 1px solid var(--color-border);
-    }
-    .panel-title {
-        font-size: 14px;
-        font-weight: 600;
-        color: var(--color-text-primary);
-        margin: 0;
-    }
-
-    .preview-container {
-        position: sticky;
-        top: 20px;
-    }
-
-    .preview-image {
-        width: 100%;
-        max-height: 560px;
-        object-fit: contain;
-        border-radius: var(--radius-md);
-        background: var(--color-bg);
-        border: 1px solid var(--color-border);
-    }
-
-    .preview-pdf {
-        width: 100%;
-        height: 560px;
-        border-radius: var(--radius-md);
-        border: 1px solid var(--color-border);
-    }
-
-    .preview-empty {
-        height: 320px;
-        background: var(--color-bg);
-        border: 2px dashed var(--color-border);
-        border-radius: var(--radius-md);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        color: var(--color-text-secondary);
-    }
-
+    .edit-layout { display: grid; grid-template-columns: 1fr 1.1fr; gap: 20px; align-items: start; }
+    @media (max-width: 900px) { .edit-layout { grid-template-columns: 1fr; } }
+    .panel { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 22px; }
+    .panel-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid var(--color-border); }
+    .panel-title { font-size: 14px; font-weight: 600; color: var(--color-text-primary); margin: 0; }
+    .preview-container { position: sticky; top: 20px; }
+    .preview-image { width: 100%; max-height: 560px; object-fit: contain; border-radius: var(--radius-md); background: var(--color-bg); border: 1px solid var(--color-border); }
+    .preview-empty { height: 320px; background: var(--color-bg); border: 2px dashed var(--color-border); border-radius: var(--radius-md); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: var(--color-text-secondary); }
     .form-group { margin-bottom: 16px; }
-    .form-label {
-        display: block;
-        font-size: 11px;
-        text-transform: uppercase;
-        letter-spacing: 0.4px;
-        font-weight: 600;
-        color: var(--color-text-secondary);
-        margin-bottom: 6px;
-    }
-
+    .form-label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; font-weight: 600; color: var(--color-text-secondary); margin-bottom: 6px; }
     .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     @media (max-width: 600px) { .form-row { grid-template-columns: 1fr; } }
-
-    .input-modern, select.input-modern, textarea.input-modern {
-        width: 100%;
-        padding: 9px 12px;
-        border: 1px solid var(--color-border);
-        border-radius: var(--radius-md);
-        background: var(--color-surface);
-        font-size: 13.5px;
-        font-family: inherit;
-        color: var(--color-text-primary);
-        transition: all 0.18s ease;
-    }
-    .input-modern:focus {
-        outline: none;
-        border-color: var(--color-primary);
-        box-shadow: 0 0 0 3px rgba(83, 74, 183, 0.1);
-    }
+    .input-modern, select.input-modern, textarea.input-modern { width: 100%; padding: 9px 12px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); font-size: 13.5px; font-family: inherit; color: var(--color-text-primary); transition: all 0.18s ease; }
+    .input-modern:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(83,74,183,0.1); }
     textarea.input-modern { min-height: 70px; resize: vertical; }
-
-    .input-detected-label {
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-        font-size: 10px;
-        color: var(--color-primary);
-        margin-left: 6px;
-        font-weight: 600;
-        text-transform: none;
-        letter-spacing: 0;
-    }
-
-    .status-card {
-        padding: 14px 16px;
-        border-radius: var(--radius-md);
-        margin-bottom: 18px;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-    }
-    .status-success {
-        background: #E8F7F1;
-        border: 1px solid #B8E5D2;
-        color: #0D5C44;
-    }
-    .status-warning {
-        background: #FBF1E0;
-        border: 1px solid #F0D9A8;
-        color: #784A0E;
-    }
+    .input-detected-label { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; color: var(--color-primary); margin-left: 6px; font-weight: 600; text-transform: none; letter-spacing: 0; }
+    .status-card { padding: 14px 16px; border-radius: var(--radius-md); margin-bottom: 18px; display: flex; align-items: center; gap: 12px; }
+    .status-success { background: #E8F7F1; border: 1px solid #B8E5D2; color: #0D5C44; }
+    .status-warning { background: #FBF1E0; border: 1px solid #F0D9A8; color: #784A0E; }
     .status-card i { font-size: 22px; }
     .status-text { font-size: 13px; line-height: 1.4; }
     .status-title { font-weight: 600; margin-bottom: 2px; }
-
-    .actions-row {
-        display: flex;
-        gap: 10px;
-        margin-top: 22px;
-        padding-top: 18px;
-        border-top: 1px solid var(--color-border);
-    }
-    @media (max-width: 600px) {
-        .actions-row { flex-direction: column-reverse; }
-    }
-
-    .btn-modern {
-        padding: 10px 18px;
-        border-radius: var(--radius-md);
-        font-size: 13px;
-        font-weight: 600;
-        border: none;
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 6px;
-        transition: all 0.18s ease;
-        text-decoration: none;
-        font-family: inherit;
-    }
-    .btn-primary-modern {
-        background: var(--color-primary);
-        color: white;
-        flex: 1;
-    }
-    .btn-primary-modern:hover {
-        background: var(--color-primary-hover);
-        transform: translateY(-1px);
-    }
-    .btn-secondary-modern {
-        background: var(--color-surface);
-        color: var(--color-text-primary);
-        border: 1px solid var(--color-border);
-    }
+    .montos-box { background: var(--color-bg); border-radius: var(--radius-md); padding: 12px 14px; margin-bottom: 16px; }
+    .montos-box-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; color: var(--color-text-secondary); margin-bottom: 10px; }
+    .actions-row { display: flex; gap: 10px; margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--color-border); }
+    @media (max-width: 600px) { .actions-row { flex-direction: column-reverse; } }
+    .btn-modern { padding: 10px 18px; border-radius: var(--radius-md); font-size: 13px; font-weight: 600; border: none; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.18s ease; text-decoration: none; font-family: inherit; }
+    .btn-primary-modern { background: var(--color-primary); color: white; flex: 1; }
+    .btn-primary-modern:hover { background: var(--color-primary-hover); transform: translateY(-1px); }
+    .btn-secondary-modern { background: var(--color-surface); color: var(--color-text-primary); border: 1px solid var(--color-border); }
     .btn-secondary-modern:hover { background: var(--color-bg); }
-    .btn-danger-modern {
-        background: var(--color-surface);
-        color: var(--color-danger);
-        border: 1px solid var(--color-danger);
-    }
+    .btn-danger-modern { background: var(--color-surface); color: var(--color-danger); border: 1px solid var(--color-danger); }
     .btn-danger-modern:hover { background: #FCE9E9; }
-
-    .quick-info {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        margin-bottom: 14px;
-    }
-    .info-chip {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 5px 10px;
-        background: var(--color-bg);
-        border-radius: 6px;
-        font-size: 11.5px;
-        color: var(--color-text-secondary);
-    }
+    .quick-info { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+    .info-chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; background: var(--color-bg); border-radius: 6px; font-size: 11.5px; color: var(--color-text-secondary); }
     .info-chip strong { color: var(--color-text-primary); font-weight: 600; }
-
-    .download-link {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        font-size: 12px;
-        color: var(--color-primary);
-        text-decoration: none;
-        font-weight: 500;
-    }
+    .download-link { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--color-primary); text-decoration: none; font-weight: 500; }
     .download-link:hover { text-decoration: underline; }
-
-    .errorlist {
-        list-style: none;
-        padding: 0;
-        margin: 4px 0 0;
-        color: var(--color-danger);
-        font-size: 12px;
-    }
+    .errorlist { list-style: none; padding: 0; margin: 4px 0 0; color: var(--color-danger); font-size: 12px; }
 </style>
 {% endblock %}
-
-{% block header_title %}Editar gasto{% endblock %}
 
 {% block content %}
 <div class="edit-layout">
 
+    <!-- PANEL IZQUIERDO: preview boleta -->
     <div class="preview-container">
         <div class="panel">
             <div class="panel-header">
-                <h3 class="panel-title">
-                    <i class="bi bi-receipt" style="color: var(--color-primary); margin-right: 6px;"></i>
-                    Boleta original
-                </h3>
+                <h3 class="panel-title"><i class="bi bi-receipt" style="color:var(--color-primary);margin-right:6px;"></i>Boleta original</h3>
                 {% if gasto.imagen %}
                 <a href="{{ gasto.imagen.url }}" class="download-link" target="_blank">
                     <i class="bi bi-download"></i> Descargar
                 </a>
                 {% endif %}
             </div>
-
             <div class="quick-info">
-                <span class="info-chip">
-                    <i class="bi bi-hash"></i> ID <strong>#{{ gasto.id }}</strong>
-                </span>
+                <span class="info-chip"><i class="bi bi-hash"></i> ID <strong>#{{ gasto.id }}</strong></span>
                 {% if gasto.fecha_subida %}
-                <span class="info-chip">
-                    <i class="bi bi-calendar-check"></i> Subido <strong>{{ gasto.fecha_subida|date:"d M Y H:i" }}</strong>
-                </span>
+                <span class="info-chip"><i class="bi bi-calendar-check"></i> Subido <strong>{{ gasto.fecha_subida|date:"d M Y H:i" }}</strong></span>
                 {% endif %}
                 {% if gasto.usuario %}
-                <span class="info-chip">
-                    <i class="bi bi-person"></i> <strong>{{ gasto.usuario.username }}</strong>
-                </span>
+                <span class="info-chip"><i class="bi bi-person"></i> <strong>{{ gasto.usuario.username }}</strong></span>
                 {% endif %}
             </div>
-
             {% if gasto.imagen %}
             {% with img_url=gasto.imagen.url %}
             {% if '.pdf' in gasto.imagen.name|lower %}
-                <div class="preview-empty" style="height: 220px;">
-                    <i class="bi bi-file-earmark-pdf-fill" style="font-size: 52px; color: #E24B4A;"></i>
-                    <span style="font-size: 14px; font-weight: 600;">Boleta #{{ gasto.folio|default:gasto.id }}</span>
-                    <a href="{{ img_url }}" target="_blank"
-                    class="btn-modern btn-primary-modern"
-                    style="margin-top: 8px; padding: 8px 24px; text-decoration: none;">
+                <div class="preview-empty" style="height:220px;">
+                    <i class="bi bi-file-earmark-pdf-fill" style="font-size:52px;color:#E24B4A;"></i>
+                    <span style="font-size:14px;font-weight:600;">Boleta #{{ gasto.folio|default:gasto.id }}</span>
+                    <a href="{{ img_url }}" target="_blank" class="btn-modern btn-primary-modern" style="margin-top:8px;padding:8px 24px;text-decoration:none;">
                         <i class="bi bi-box-arrow-up-right"></i> Ver PDF
                     </a>
                 </div>
@@ -275,17 +84,20 @@
                 <img src="{{ img_url }}" alt="Boleta" class="preview-image" loading="lazy">
             {% endif %}
             {% endwith %}
+            {% else %}
+            <div class="preview-empty">
+                <i class="bi bi-image" style="font-size:36px;opacity:0.3;"></i>
+                <span style="font-size:13px;">Sin imagen adjunta</span>
+            </div>
             {% endif %}
         </div>
     </div>
 
+    <!-- PANEL DERECHO: formulario -->
     <div>
         <div class="panel">
             <div class="panel-header">
-                <h3 class="panel-title">
-                    <i class="bi bi-pencil-square" style="color: var(--color-primary); margin-right: 6px;"></i>
-                    Datos del gasto
-                </h3>
+                <h3 class="panel-title"><i class="bi bi-pencil-square" style="color:var(--color-primary);margin-right:6px;"></i>Datos del gasto</h3>
             </div>
 
             {% if gasto.procesado_exitosamente %}
@@ -309,97 +121,119 @@
             <form method="post" enctype="multipart/form-data" novalidate>
                 {% csrf_token %}
 
+                <!-- Fecha y tipo -->
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="{{ form.fecha_emision.id_for_label }}" class="form-label">
+                        <label class="form-label">
                             Fecha emisión
-                            {% if gasto.fecha_emision and gasto.procesado_exitosamente %}
-                                <span class="input-detected-label"><i class="bi bi-magic"></i> Detectado</span>
-                            {% endif %}
+                            {% if gasto.fecha_emision and gasto.procesado_exitosamente %}<span class="input-detected-label"><i class="bi bi-magic"></i> Detectado</span>{% endif %}
                         </label>
                         {{ form.fecha_emision }}
                         {{ form.fecha_emision.errors }}
                     </div>
-
                     <div class="form-group">
-                        <label for="{{ form.monto_total.id_for_label }}" class="form-label">
-                            Monto total (CLP)
-                            {% if gasto.monto_total and gasto.procesado_exitosamente %}
-                                <span class="input-detected-label"><i class="bi bi-magic"></i> Detectado</span>
-                            {% endif %}
-                        </label>
-                        {{ form.monto_total }}
-                        {{ form.monto_total.errors }}
+                        <label class="form-label">Tipo documento</label>
+                        {{ form.tipo_documento }}
                     </div>
                 </div>
 
+                <!-- Montos -->
+                <div class="montos-box">
+                    <div class="montos-box-title">Montos</div>
+                    <div class="form-row" style="margin-bottom:8px;">
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label class="form-label">
+                                Monto Neto
+                                {% if gasto.monto_neto and gasto.procesado_exitosamente %}<span class="input-detected-label"><i class="bi bi-magic"></i> Detectado</span>{% endif %}
+                            </label>
+                            {{ form.monto_neto }}
+                        </div>
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label class="form-label">
+                                IVA (19%)
+                                {% if gasto.iva and gasto.procesado_exitosamente %}<span class="input-detected-label"><i class="bi bi-magic"></i> Detectado</span>{% endif %}
+                            </label>
+                            {{ form.iva }}
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label class="form-label">
+                                Monto Total (CLP)
+                                {% if gasto.monto_total and gasto.procesado_exitosamente %}<span class="input-detected-label"><i class="bi bi-magic"></i> Detectado</span>{% endif %}
+                            </label>
+                            {{ form.monto_total }}
+                            {{ form.monto_total.errors }}
+                        </div>
+                        <div class="form-group" style="margin-bottom:0;display:flex;align-items:center;gap:8px;padding-top:20px;">
+                            {{ form.tiene_iva }}
+                            <label style="font-size:13px;color:var(--color-text-primary);cursor:pointer;margin:0;">¿Afecto a IVA?</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RUT y nombre proveedor -->
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="{{ form.rut_emisor.id_for_label }}" class="form-label">
+                        <label class="form-label">
                             RUT proveedor
-                            {% if gasto.rut_emisor and gasto.procesado_exitosamente %}
-                                <span class="input-detected-label"><i class="bi bi-magic"></i> Detectado</span>
-                            {% endif %}
+                            {% if gasto.rut_emisor and gasto.procesado_exitosamente %}<span class="input-detected-label"><i class="bi bi-magic"></i> Detectado</span>{% endif %}
                         </label>
                         {{ form.rut_emisor }}
                         {{ form.rut_emisor.errors }}
                     </div>
-
                     <div class="form-group">
-                        <label for="{{ form.folio.id_for_label }}" class="form-label">
+                        <label class="form-label">Nombre proveedor</label>
+                        {{ form.nombre_emisor }}
+                    </div>
+                </div>
+
+                <!-- Folio y categoría -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">
                             Folio / N° doc
-                            {% if gasto.folio and gasto.procesado_exitosamente %}
-                                <span class="input-detected-label"><i class="bi bi-magic"></i> Detectado</span>
-                            {% endif %}
+                            {% if gasto.folio and gasto.procesado_exitosamente %}<span class="input-detected-label"><i class="bi bi-magic"></i> Detectado</span>{% endif %}
                         </label>
                         {{ form.folio }}
                         {{ form.folio.errors }}
                     </div>
-                </div>
-
-                <div class="form-row">
                     <div class="form-group">
-                        <label for="{{ form.categoria.id_for_label }}" class="form-label">Categoría</label>
+                        <label class="form-label">Categoría</label>
                         {{ form.categoria }}
                         {{ form.categoria.errors }}
                     </div>
-
-                    <div class="form-group">
-                        <label for="{{ form.obra.id_for_label }}" class="form-label">Proyecto</label>
-                        {{ form.obra }}
-                        {{ form.obra.errors }}
-                    </div>
                 </div>
 
+                <!-- Proyecto -->
                 <div class="form-group">
-                    <label for="{{ form.descripcion.id_for_label }}" class="form-label">
-                        Descripción / Detalle
-                    </label>
+                    <label class="form-label">Proyecto</label>
+                    {{ form.obra }}
+                    {{ form.obra.errors }}
+                </div>
+
+                <!-- Descripción -->
+                <div class="form-group">
+                    <label class="form-label">Descripción / Detalle</label>
                     {{ form.descripcion }}
                     {{ form.descripcion.errors }}
                 </div>
 
+                <!-- Reemplazar archivo -->
                 <div class="form-group">
-                    <label for="{{ form.imagen.id_for_label }}" class="form-label">
-                        Reemplazar archivo (opcional)
-                    </label>
+                    <label class="form-label">Reemplazar archivo (opcional)</label>
                     {{ form.imagen }}
                     {{ form.imagen.errors }}
-                    <div style="font-size: 11px; color: var(--color-text-secondary); margin-top: 4px;">
+                    <div style="font-size:11px;color:var(--color-text-secondary);margin-top:4px;">
                         Si subes un nuevo archivo, se volverá a procesar el OCR.
                     </div>
                 </div>
 
                 <div class="actions-row">
-                    <a href="{% url 'eliminar_gasto' gasto.pk %}"
-                       class="btn-modern btn-danger-modern"
-                       title="Eliminar gasto">
+                    <a href="{% url 'eliminar_gasto' gasto.pk %}" class="btn-modern btn-danger-modern" title="Eliminar gasto">
                         <i class="bi bi-trash"></i>
                     </a>
-                    <a href="{% url 'historial_gastos' %}"
-                       class="btn-modern btn-secondary-modern">
-                        Cancelar
-                    </a>
+                    <a href="{% url 'historial_gastos' %}" class="btn-modern btn-secondary-modern">Cancelar</a>
                     <button type="submit" class="btn-modern btn-primary-modern">
                         <i class="bi bi-check-lg"></i> Guardar cambios
                     </button>
@@ -413,17 +247,47 @@
 
 {% block scripts %}
 <script>
-    // Aplicar clase moderna a todos los inputs del form
-    document.querySelectorAll('form input, form select, form textarea').forEach(el => {
-        if (el.type !== 'hidden' && el.type !== 'file' && el.type !== 'submit') {
-            el.classList.add('input-modern');
-        }
-    });
-    // Estilo especial para input file
-    const fileInput = document.querySelector('input[type="file"]');
-    if (fileInput) {
-        fileInput.style.fontSize = '13px';
-        fileInput.style.padding = '6px';
+document.querySelectorAll('form input, form select, form textarea').forEach(el => {
+    if (el.type !== 'hidden' && el.type !== 'file' && el.type !== 'submit' && el.type !== 'checkbox') {
+        el.classList.add('input-modern');
     }
+});
+const fileInput = document.querySelector('input[type="file"]');
+if (fileInput) { fileInput.style.fontSize = '13px'; fileInput.style.padding = '6px'; }
+
+// Auto-calcular IVA y total cuando cambia el neto
+const inputNeto  = document.querySelector('input[name="monto_neto"]');
+const inputIva   = document.querySelector('input[name="iva"]');
+const inputTotal = document.querySelector('input[name="monto_total"]');
+const cbIva      = document.querySelector('input[name="tiene_iva"]');
+
+function calcularDesdeNeto() {
+    const neto = parseInt(inputNeto.value) || 0;
+    if (!neto) return;
+    if (cbIva && cbIva.checked) {
+        const iva = Math.round(neto * 0.19);
+        inputIva.value   = iva;
+        inputTotal.value = neto + iva;
+    } else {
+        inputIva.value   = 0;
+        inputTotal.value = neto;
+    }
+}
+function calcularDesdeTotal() {
+    const total = parseInt(inputTotal.value) || 0;
+    if (!total) return;
+    if (cbIva && cbIva.checked) {
+        const neto = Math.round(total / 1.19);
+        inputNeto.value = neto;
+        inputIva.value  = total - neto;
+    } else {
+        inputNeto.value = total;
+        inputIva.value  = 0;
+    }
+}
+
+if (inputNeto)  inputNeto.addEventListener('blur',  calcularDesdeNeto);
+if (inputTotal) inputTotal.addEventListener('blur', calcularDesdeTotal);
+if (cbIva)      cbIva.addEventListener('change',   calcularDesdeNeto);
 </script>
 {% endblock %}
